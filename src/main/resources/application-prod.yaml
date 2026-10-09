@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: ${PROD_DB_URL}
+    username: ${PROD_USERNAME}
+    password: ${PROD_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+    # HikariCP Production Optimization
+    hikari:
+      maximum-pool-size: 10          # Adjust based on your DB server capacity (Rule of thumb: (Core Count * 2) + effective spindle count)
+      minimum-idle: 5                # Keep connections ready to handle sudden traffic spikes
+      idle-timeout: 300000           # 5 minutes before an idle connection is closed
+      connection-timeout: 20000      # 20 seconds max to wait for a connection before throwing an exception
+
+  jpa:
+    hibernate:
+      # Production uses 'validate' (or 'none'). Never use 'update' or 'create' in production.
+      ddl-auto: validate
+
+    show-sql: false                  # Disabled for performance and security in production
+
+    properties:
+      hibernate:
+        format_sql: false
+        # dialect: org.hibernate.dialect.PostgreSQLDialect (Hibernate 6+ auto-detects this cleanly, but can be kept if preferred)
