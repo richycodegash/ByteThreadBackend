@@ -7,11 +7,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestValueException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -160,6 +162,34 @@ public class GlobalExceptions {
                 .build();
 
         System.out.println("\nSOMETHING WENT WRONG :-->"+ex.getMessage());
+
+        return new ResponseEntity<>(errorObject,HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(MissingRequestValueException.class)
+    public ResponseEntity<ErrorObject> requestValueIssues(MissingRequestValueException ex){
+        ErrorObject errorObject = ErrorObject.builder()
+                .errorStatus(HttpStatus.BAD_REQUEST.value())
+                .errorType("BAD_REQUEST")
+                .timestamp(LocalDateTime.now())
+                .error("something went horribly wrong.Your request didn't come through,stay put as we try to fix the issue")
+                .build();
+
+        System.out.println("\nSOMETHING WENT WRONG :-->"+ex.getMessage());
+
+        return new ResponseEntity<>(errorObject,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorObject> handleRunTimeExceptions(RuntimeException ex){
+        ErrorObject errorObject = ErrorObject.builder()
+                .errorStatus(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .errorType("INTERNAL_CONFLICT4")
+                .timestamp(LocalDateTime.now())
+                .error("something went horribly wrong.Your request didn't come through,stay put as we try to fix the issue")
+                .build();
+
+        System.out.println("\nSOMETHING WENT WRONG :-->"+ex.getMessage()+ "\n\n"+Arrays.toString(ex.getStackTrace()));
 
         return new ResponseEntity<>(errorObject,HttpStatus.INTERNAL_SERVER_ERROR);
     }

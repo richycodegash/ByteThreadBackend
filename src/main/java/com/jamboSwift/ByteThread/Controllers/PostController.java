@@ -1,8 +1,6 @@
 package com.jamboSwift.ByteThread.Controllers;
 
-import com.jamboSwift.ByteThread.DTO.PostListsResponce;
-import com.jamboSwift.ByteThread.DTO.PostRequest;
-import com.jamboSwift.ByteThread.DTO.PostResponce;
+import com.jamboSwift.ByteThread.DTO.*;
 import com.jamboSwift.ByteThread.Services.PostService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -46,6 +44,25 @@ public class PostController {
 
     }
 
+    @PutMapping("/post")
+    public ResponseEntity<PostListsResponce> updatePost(@Valid @RequestBody UpdatePostRequest request){
+        PostListsResponce responce=postService.udpadePost(request);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(responce);
+    }
+
+    @DeleteMapping("/post")
+    public ResponseEntity<String> deletePost(@Valid @RequestBody DeletePostRequest request){
+        postService.deletePost(request);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body("Post has been dropped from the main frame.");
+
+    }
+
     @GetMapping("/post/{postTitle}")
     public ResponseEntity<Page<PostListsResponce>> getPostBySlug(
             @RequestParam String accountName,
@@ -66,6 +83,19 @@ public class PostController {
     ){
         System.out.println("\n***RECEIVED ACCOUNT NAME: '" + accountName + "'");
         Page<PostListsResponce> responces =postService.getPostByUser(accountName, pageable);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(responces);
+    }
+
+    @GetMapping("/{tagSlug}/post")
+    public ResponseEntity<Page<PostListsResponce>> getPostByTagSlug(
+            @PathVariable String tagSlug,
+            @RequestParam String accountName,
+            @PageableDefault(size = 10,sort = "createdAt",direction = Sort.Direction.DESC) Pageable pageable
+    ){
+        Page<PostListsResponce> responces=postService.getPostByTag(tagSlug, accountName, pageable);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

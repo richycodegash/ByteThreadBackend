@@ -14,6 +14,9 @@ import com.jamboSwift.ByteThread.Utilities.HelperClass;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @AllArgsConstructor
 public class CategoriesService {
@@ -52,5 +55,17 @@ public class CategoriesService {
         String clientName=client.getFirstName()+" "+client.getSecondName();
 
         return CategoryCreationResponce.fromCategory(categoryName, clientName);
+    }
+
+    public List<String> getcategories(){
+        List<Category> categories=categoryRepo.findAll();
+        List<String> categroyNames=new ArrayList<>();
+        String name;
+        for (Category category : categories){
+            name= category.getName();
+            categroyNames.add(name);
+        }
+
+        return categroyNames;
     }
 }

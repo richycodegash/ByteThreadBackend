@@ -34,4 +34,6 @@ public interface PostRepo extends JpaRepository<Post, UUID> {
     WHERE LOWER(TRIM(p.account.accountName)) = LOWER(TRIM(:accountName))
 """)
     Page<Post> findByAccount(@Param("accountName") String accountName,Pageable pageable);
+
+    Page<Post> findByTags_Slug(String slug,Pageable pageable);
 }

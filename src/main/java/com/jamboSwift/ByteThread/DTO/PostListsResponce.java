@@ -8,9 +8,11 @@ import lombok.Builder;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Builder
 public record PostListsResponce(
+        UUID postId,
         String title,
         String slug,
         String content,
@@ -35,6 +37,7 @@ public record PostListsResponce(
                 .excerpt(post.getExcerpt())
                 .createdAt(creationDate)
                 .slug(post.getSlug())
+                .postId(post.getId())
                 .build();
     }
 }

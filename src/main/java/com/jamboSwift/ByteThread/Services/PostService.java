@@ -1,8 +1,7 @@
 package com.jamboSwift.ByteThread.Services;
 
-import com.jamboSwift.ByteThread.DTO.PostListsResponce;
-import com.jamboSwift.ByteThread.DTO.PostRequest;
-import com.jamboSwift.ByteThread.DTO.PostResponce;
+import com.jamboSwift.ByteThread.DTO.*;
+import com.jamboSwift.ByteThread.Enums.Roles;
 import com.jamboSwift.ByteThread.Exceptions.ClientNotFoundException;
 import com.jamboSwift.ByteThread.Exceptions.InvalidCredantials;
 import com.jamboSwift.ByteThread.Exceptions.UnfoundCategory;
@@ -14,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.*;
 
@@ -149,6 +149,85 @@ public class PostService {
 
         return posts.map(PostListsResponce::fromPost);
 
+    }
+
+    public PostListsResponce udpadePost(UpdatePostRequest request){
+        String email=request.email().trim().toLowerCase();
+        String accountName=request.accountName().trim().toLowerCase();
+        UUID id=request.postId();
+        String content= (request.content().isPresent()&& !request.content().get().isEmpty()) ? request.content().get().trim() : "null";
+        String excerpt=(request.excerpt().isPresent() && !request.excerpt().get().isEmpty()) ? request.excerpt().get().trim() : "null";
+
+        Client client=clientRepo.findByEmail(email).orElseThrow(
+                ()->new InvalidCredantials("Invalid credentials.")
+        );
+
+        Account account=client.getAccount();
+
+        if (!Objects.equals(account.getAccountName(), accountName)){
+            throw new InvalidCredantials("Invalid credentials.You are not the owner of this post.");
+        }
+
+        Post post=postRepo.findById(id).orElseThrow(
+                ()->new ClientNotFoundException("Invalid post.")
+        );
+
+        if (post.getAccount().getId()!=account.getId()){
+            throw new InvalidCredantials("This post does not belong to your account.");
+        }
+
+        if (!content.equals("null")){
+            post.setContent(content);
+        }
+
+        if (!excerpt.equals("null")){
+            post.setExcerpt(excerpt);
+        }
+
+        postRepo.save(post);
+
+        return PostListsResponce.fromPost(post);
+    }
+
+    public void deletePost(DeletePostRequest request){
+        String email=request.email().trim().toLowerCase();
+        UUID id=request.postId();
+        String accountName=request.accountName().trim().toLowerCase();
+
+        Client client=clientRepo.findByEmail(email).orElseThrow(
+                ()->new InvalidCredantials("Invalid credentials.")
+        );
+
+        Account account=client.getAccount();
+
+        if (!Objects.equals(account.getAccountName(), accountName)){
+            throw new InvalidCredantials("Invalid credentials.You are not the owner of this post.");
+        }
+
+        Post post=postRepo.findById(id).orElseThrow(
+                ()->new ClientNotFoundException("Post not found.")
+        );
+
+        if (post.getAccount().getId()!=account.getId()){
+            throw new InvalidCredantials("This post does not belong to your account.");
+        }
+
+        postRepo.delete(post);
+
+
+    }
+
+    public Page<PostListsResponce> getPostByTag(String tagSlug,String accountName,Pageable pageable){
+        if (!accountRepo.existsByAccountName(accountName)){
+            throw new ClientNotFoundException("client conflict.");
+        }
+        Tag tag=tagsRepo.findBySlug(tagSlug).orElseThrow(
+                ()->new ClientNotFoundException("Tag does not exist.")
+        );
+
+        Page<Post> posts=postRepo.findByTags_Slug(tag.getSlug(),pageable);
+
+        return posts.map(PostListsResponce::fromPost);
     }
 
 }
