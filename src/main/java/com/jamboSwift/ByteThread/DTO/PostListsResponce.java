@@ -2,6 +2,7 @@ package com.jamboSwift.ByteThread.DTO;
 
 import com.jamboSwift.ByteThread.Models.Category;
 import com.jamboSwift.ByteThread.Models.Post;
+import com.jamboSwift.ByteThread.Models.Tag;
 import com.jamboSwift.ByteThread.Utilities.TimeConverter;
 import lombok.Builder;
 
@@ -19,6 +20,7 @@ public record PostListsResponce(
         String excerpt,
         String authorName,
         Set<String> categoryName,
+        Set<String> tags,
         LocalDateTime createdAt
 ) {
     public static PostListsResponce fromPost(Post post){
@@ -26,6 +28,12 @@ public record PostListsResponce(
         for (Category category:post.getCategories()){
             String categoryName=category.getName();
             categories.add(categoryName);
+        }
+
+        Set<String> tags=new HashSet<>();
+        for (Tag tag : post.getTags()){
+            String tagName=tag.getSlug();
+            tags.add(tagName);
         }
 
         LocalDateTime creationDate= TimeConverter.toLocalDateTime(post.getCreatedAt(),"Africa/Nairobi");
@@ -38,6 +46,7 @@ public record PostListsResponce(
                 .createdAt(creationDate)
                 .slug(post.getSlug())
                 .postId(post.getId())
+                .tags(tags)
                 .build();
     }
 }

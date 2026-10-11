@@ -89,7 +89,7 @@ public class PostController {
                 .body(responces);
     }
 
-    @GetMapping("/{tagSlug}/post")
+    @GetMapping("/{tagSlug}/posts")
     public ResponseEntity<Page<PostListsResponce>> getPostByTagSlug(
             @PathVariable String tagSlug,
             @RequestParam String accountName,
