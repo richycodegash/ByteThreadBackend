@@ -36,6 +36,9 @@ public class Post {
     @Column(name = "excerpt")
     private String excerpt;
 
+    @Column(name="image_url")
+    private String imageUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;

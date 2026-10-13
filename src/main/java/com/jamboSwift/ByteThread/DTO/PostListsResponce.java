@@ -19,6 +19,7 @@ public record PostListsResponce(
         String content,
         String excerpt,
         String authorName,
+        String imageUrl,
         Set<String> categoryName,
         Set<String> tags,
         LocalDateTime createdAt
@@ -47,6 +48,7 @@ public record PostListsResponce(
                 .slug(post.getSlug())
                 .postId(post.getId())
                 .tags(tags)
+                .imageUrl(post.getImageUrl())
                 .build();
     }
 }

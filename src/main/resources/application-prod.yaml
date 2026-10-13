@@ -23,3 +23,10 @@ spring:
       hibernate:
         format_sql: false
         # dialect: org.hibernate.dialect.PostgreSQLDialect (Hibernate 6+ auto-detects this cleanly, but can be kept if preferred)
+
+cloudinary:
+  cloud_name: ${CLOUDINARY_CLOUD_NAME}
+  api_key: ${CLOUDINARY_API_KEY}
+  api_secret: ${CLOUDINARY_API_SECRET}
+
+

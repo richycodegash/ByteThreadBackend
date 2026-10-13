@@ -25,7 +25,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         auth->
-                                auth.requestMatchers("/api/jamboSwift/public/**").permitAll()
+                                auth
+                                        .requestMatchers("/api/jamboSwift/public/**").permitAll()
+                                        .requestMatchers("/posts-tester.html").permitAll()
                                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults())

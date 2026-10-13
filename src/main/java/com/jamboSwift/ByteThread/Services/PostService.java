@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -27,9 +28,10 @@ public class PostService {
     private final HelperClass helperClass;
     private final RandomGeneratorHelper randomGeneratorHelper;
     private final AccountRepo accountRepo;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional
-    public PostResponce postThemShit(PostRequest request){
+    public PostResponce postThemShit(PostRequest request, MultipartFile file){
         System.out.println("\n**inside post service***\n");
         String normalizedEmail = request.email().trim().toLowerCase();
         String excerpt=request.excerpt();
@@ -90,6 +92,15 @@ public class PostService {
             theSlug= randomGeneratorHelper.generateRandomSlug(theSlug);
         }
 
+        String imageUrl;
+        if (file == null || file.isEmpty()) {
+            // Handle the case where NO image was sent
+            System.out.println("No image uploaded!");
+            imageUrl="null";
+        } else {
+            // Handle the case where an image IS present
+            imageUrl=cloudinaryService.uploadFile(file);
+        }
 
 
         Post post=Post.builder()
@@ -100,6 +111,7 @@ public class PostService {
                 .content(request.content())
                 .categories(foundCategories)
                 .tags(foundTags)
+                .imageUrl(imageUrl)
                 .build();
 
         postRepo.save(post);

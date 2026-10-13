@@ -9,8 +9,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @AllArgsConstructor
@@ -18,15 +20,17 @@ import org.springframework.web.bind.annotation.*;
 public class PostController {
     private final PostService postService;
 
-    @PostMapping("/post")
-    public ResponseEntity<PostResponce> post(@Valid @RequestBody PostRequest request){
+    @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PostResponce> post(
+            @RequestPart("request") PostRequest request,
+            @RequestParam("file") MultipartFile multipartFile
+    ) {
         System.out.println("\n***Inside post controller***\n");
-        PostResponce responce= postService.postThemShit(request);
+        PostResponce responce = postService.postThemShit(request, multipartFile);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(responce);
-
     }
 
     @GetMapping("/post")
@@ -34,7 +38,7 @@ public class PostController {
             @RequestParam String accountName,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
             ){
         Page<PostListsResponce> responces=postService.getPost(accountName, category, keyword, pageable);
 
