@@ -40,6 +40,7 @@ public class PostController {
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
             ){
+        System.out.println("\n**inside get method ***\n");
         Page<PostListsResponce> responces=postService.getPost(accountName, category, keyword, pageable);
 
         return ResponseEntity

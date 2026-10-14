@@ -122,6 +122,7 @@ public class PostService {
     public Page<PostListsResponce> getPost(String accountName,String category,
                                            String keyword,Pageable pageable){
         if (!accountRepo.existsByAccountName(accountName)){
+            System.out.println("\n**** client does not exist ****\n");
             throw new ClientNotFoundException("client conflict.");
         }
 
