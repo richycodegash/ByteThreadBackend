@@ -15,7 +15,7 @@ spring:
   jpa:
     hibernate:
       # Production uses 'validate' (or 'none'). Never use 'update' or 'create' in production.
-      ddl-auto: validate
+      ddl-auto: update
 
     show-sql: false                  # Disabled for performance and security in production
 
