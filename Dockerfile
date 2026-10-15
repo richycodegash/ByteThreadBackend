@@ -19,11 +19,11 @@ FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Step A: Cache dependencies
-COPY ByteThread/pom.xml .
+COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
 # Step B: Copy source code and build
-COPY ByteThread/src ./src
+COPY src ./src
 RUN mvn clean package -DskipTests
 
 
