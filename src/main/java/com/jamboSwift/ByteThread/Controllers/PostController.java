@@ -23,7 +23,7 @@ public class PostController {
     @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponce> post(
             @RequestPart("request") PostRequest request,
-            @RequestParam("file") MultipartFile multipartFile
+            @RequestParam(value = "file",required = false) MultipartFile multipartFile
     ) {
         System.out.println("\n***Inside post controller***\n");
         PostResponce responce = postService.postThemShit(request, multipartFile);
