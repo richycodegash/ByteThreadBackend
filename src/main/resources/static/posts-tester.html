@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Posts tester</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Posts feed tester</title>
 <style>
   :root {
     --bg: #f5f6f8;
@@ -18,7 +18,7 @@
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #12171d;
+      --bg: #0d1116;
       --surface: #1b222b;
       --text: #e6eaf0;
       --muted: #98a2b3;
@@ -31,114 +31,193 @@
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
+  html, body { height: 100%; }
   body {
     margin: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
     background: var(--bg);
     color: var(--text);
     font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
     line-height: 1.5;
   }
+
+  /* ---------- top bar ---------- */
   header {
-    position: sticky;
-    top: 0;
-    z-index: 5;
+    flex: 0 0 auto;
     background: var(--surface);
     border-bottom: 1px solid var(--line);
-    padding: 14px 20px;
+    padding: 10px 16px;
   }
-  form {
-    display: flex;
-    gap: 8px;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
+  form, .auth { display: flex; gap: 8px; max-width: 900px; margin: 0 auto; }
+  .auth { margin-top: 8px; }
+  .auth select { flex: 0 0 auto; }
   input, select {
     flex: 1;
     min-width: 0;
-    padding: 10px 12px;
+    padding: 9px 12px;
     font: inherit;
     color: var(--text);
     background: var(--bg);
     border: 1px solid var(--line);
     border-radius: 6px;
   }
-  .auth { display: flex; gap: 8px; max-width: 1100px; margin: 8px auto 0; }
-  .auth select { flex: 0 0 auto; }
-  button {
+  button.load {
     font: inherit;
-    padding: 10px 18px;
+    padding: 9px 18px;
     color: #fff;
     background: var(--accent);
     border: 0;
     border-radius: 6px;
     cursor: pointer;
   }
-  button:hover:not(:disabled) { background: var(--accent-dark); }
-  button:disabled { opacity: 0.45; cursor: not-allowed; }
-  button.secondary {
-    color: var(--text);
-    background: transparent;
-    border: 1px solid var(--line);
-  }
-  button.secondary:hover:not(:disabled) { background: var(--bg); }
-
-  main { max-width: 1100px; margin: 0 auto; padding: 20px; }
-
-  #status {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 16px;
-    color: var(--muted);
-    font-size: 0.92rem;
-  }
-  #pager { display: flex; gap: 8px; }
-  #pager button { padding: 6px 12px; }
+  button.load:hover { background: var(--accent-dark); }
 
   #error {
+    flex: 0 0 auto;
+    margin: 10px 16px 0;
+    padding: 10px 14px;
+    border-radius: 6px;
     background: var(--error-bg);
     color: var(--error-text);
-    padding: 12px 14px;
-    border-radius: 6px;
-    margin-bottom: 16px;
     white-space: pre-wrap;
   }
 
-  #grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 16px;
+  /* ---------- feed layout ---------- */
+  main {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 14px;
+    padding: 12px;
   }
-  article {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 8px;
+  .phone {
+    flex: 0 1 420px;
+    min-width: 0;
+    border-radius: 16px;
     overflow: hidden;
+    background: #0d1117;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  }
+  #feed {
+    height: 100%;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  #feed::-webkit-scrollbar { display: none; }
+
+  .slide {
+    position: relative;
+    height: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    overflow: hidden;
+    color: #fff;
+  }
+  .media { position: absolute; inset: 0; }
+  .media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ph {
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #8b97a7;
+    background: linear-gradient(160deg, #1f2937, #111827);
   }
-  article img {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    display: block;
-    background: var(--line);
+  .ph svg { width: 88px; height: 88px; }
+
+  .info {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 64px 16px 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0));
   }
-  .body { padding: 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-  h2 { margin: 0; font-size: 1.05rem; line-height: 1.3; }
-  .excerpt { margin: 0; color: var(--muted); font-size: 0.92rem; }
-  .meta { margin-top: auto; font-size: 0.82rem; color: var(--muted); }
+  .info h2 { margin: 0; font-size: 1.25rem; line-height: 1.25; }
+  .excerpt {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 0.95rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip {
     font-size: 0.75rem;
-    padding: 2px 8px;
+    padding: 2px 9px;
     border-radius: 999px;
-    border: 1px solid var(--line);
+    border: 1px solid rgba(255, 255, 255, 0.45);
   }
-  .chip.category { border-color: var(--accent); color: var(--accent); }
-  .empty { color: var(--muted); text-align: center; padding: 48px 0; }
+  .chip.category { background: rgba(58, 166, 198, 0.4); border-color: transparent; }
+  .meta { font-size: 0.8rem; color: rgba(255, 255, 255, 0.72); }
+
+  .msg {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    color: #98a2b3;
+    scroll-snap-align: start;
+  }
+
+  /* ---------- up / down controls ---------- */
+  #controls {
+    flex: 0 0 auto;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .nav:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .nav:disabled { opacity: 0.35; cursor: not-allowed; }
+  .nav svg { width: 22px; height: 22px; }
+  #counter { font-weight: 600; font-size: 0.95rem; }
+  #pageInfo { font-size: 0.75rem; color: var(--muted); text-align: center; }
+
+  @media (max-width: 560px) {
+    main { padding: 8px; }
+    .phone { flex: 1 1 auto; border-radius: 12px; }
+    #controls {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 3;
+    }
+    .nav { background: rgba(0, 0, 0, 0.55); color: #fff; border-color: rgba(255, 255, 255, 0.3); }
+    #counter, #pageInfo { color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); }
+    .info { padding-right: 76px; }
+  }
 </style>
 </head>
 <body>
@@ -146,9 +225,9 @@
 <header>
   <form id="form">
     <input type="text" id="url" aria-label="Posts URL"
-           value="http://localhost:8080/api/jamboSwift/post"
-           placeholder="http://localhost:8080/api/jamboSwift/post" autocomplete="off" spellcheck="false">
-    <button type="submit">Load posts</button>
+           value="http://localhost:8080/post"
+           placeholder="http://localhost:8080/post" autocomplete="off" spellcheck="false">
+    <button type="submit" class="load">Load posts</button>
   </form>
   <div class="auth">
     <select id="authMode" aria-label="Authentication">
@@ -162,52 +241,61 @@
   </div>
 </header>
 
+<div id="error" hidden></div>
+
 <main>
-  <div id="error" hidden></div>
-  <div id="status" hidden>
-    <span id="summary"></span>
-    <div id="pager">
-      <button type="button" class="secondary" id="prev">Previous</button>
-      <button type="button" class="secondary" id="next">Next</button>
-    </div>
+  <div class="phone"><div id="feed"></div></div>
+
+  <div id="controls">
+    <button type="button" class="nav" id="up" aria-label="Previous post" title="Previous (Up arrow)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15l7-7 7 7"/></svg>
+    </button>
+    <div id="counter">0 / 0</div>
+    <button type="button" class="nav" id="down" aria-label="Next post" title="Next (Down arrow)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l7 7 7-7"/></svg>
+    </button>
+    <div id="pageInfo"></div>
   </div>
-  <div id="grid"></div>
-  <p class="empty" id="hint">Enter your posts URL above and press Load posts.</p>
 </main>
 
 <script>
-  // Inline SVG placeholder shown when imageUrl is null or fails to load
-  const PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">' +
-    '<rect width="640" height="360" fill="#e3e7ed"/>' +
-    '<g fill="none" stroke="#9aa5b4" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">' +
-    '<rect x="240" y="120" width="160" height="120" rx="10"/>' +
-    '<circle cx="283" cy="161" r="14"/>' +
-    '<path d="M246 232 l52 -48 l36 32 l24 -20 l36 36"/></g>' +
-    '<text x="320" y="285" text-anchor="middle" font-family="sans-serif" font-size="22" fill="#7d8896">No image</text>' +
-    '</svg>'
-  );
-
   const form = document.getElementById("form");
   const urlInput = document.getElementById("url");
-  const grid = document.getElementById("grid");
-  const errorBox = document.getElementById("error");
-  const statusBar = document.getElementById("status");
-  const summary = document.getElementById("summary");
-  const hint = document.getElementById("hint");
-  const prevBtn = document.getElementById("prev");
-  const nextBtn = document.getElementById("next");
-
   const authMode = document.getElementById("authMode");
   const authUser = document.getElementById("authUser");
   const authPass = document.getElementById("authPass");
   const authToken = document.getElementById("authToken");
+  const errorBox = document.getElementById("error");
+  const feed = document.getElementById("feed");
+  const upBtn = document.getElementById("up");
+  const downBtn = document.getElementById("down");
+  const counter = document.getElementById("counter");
+  const pageInfo = document.getElementById("pageInfo");
+
+  let slideCount = 0;     // posts rendered so far
+  let current = 0;        // index of the post on screen
+  let pageNumber = 0;     // last page loaded
+  let totalPages = 0;
+  let totalElements = 0;
+  let loading = false;
+
+  /* ---------- helpers ---------- */
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function showError(message) {
+    errorBox.textContent = message;
+    errorBox.hidden = false;
+  }
 
   function updateAuthFields() {
     authUser.hidden = authPass.hidden = authMode.value !== "basic";
     authToken.hidden = authMode.value !== "bearer";
   }
-  authMode.addEventListener("change", updateAuthFields);
 
   function buildHeaders() {
     const headers = { "Accept": "application/json" };
@@ -218,14 +306,6 @@
       headers["Authorization"] = "Bearer " + authToken.value.trim();
     }
     return headers;
-  }
-
-  let pageNumber = 0;
-  let totalPages = 0;
-
-  function showError(message) {
-    errorBox.textContent = message;
-    errorBox.hidden = false;
   }
 
   function buildUrl(page) {
@@ -240,111 +320,199 @@
     return isNaN(d) ? "" : d.toLocaleString();
   }
 
-  function el(tag, className, text) {
-    const node = document.createElement(tag);
-    if (className) node.className = className;
-    if (text !== undefined) node.textContent = text;
-    return node;
+  /* ---------- rendering ---------- */
+  function makePlaceholder() {
+    const box = el("div", "ph");
+    box.innerHTML =
+      '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
+      '<rect x="8" y="12" width="48" height="40" rx="5"/><circle cx="23" cy="26" r="5"/>' +
+      '<path d="M10 48l16-14 11 9 8-7 9 10"/></svg><span>No image</span>';
+    return box;
   }
 
-  function renderPost(post) {
-    const card = el("article");
+  function renderSlide(post) {
+    const slide = el("section", "slide");
+    slide.setAttribute("aria-label", post.title || "Post");
 
-    const img = el("img");
-    img.alt = post.title || "Post image";
-    img.loading = "lazy";
-    img.src = post.imageUrl ? post.imageUrl : PLACEHOLDER;
-    img.onerror = () => {            // broken link falls back to the placeholder too
-      img.onerror = null;
-      img.src = PLACEHOLDER;
-    };
-    card.appendChild(img);
+    const media = el("div", "media");
+    if (post.imageUrl) {
+      const img = el("img");
+      img.alt = post.title || "Post image";
+      img.loading = "lazy";
+      img.src = post.imageUrl;
+      img.onerror = () => media.replaceChildren(makePlaceholder());  // broken link -> placeholder
+      media.appendChild(img);
+    } else {
+      media.appendChild(makePlaceholder());
+    }
+    slide.appendChild(media);
 
-    const body = el("div", "body");
-    body.appendChild(el("h2", "", post.title || "(untitled)"));
+    const info = el("div", "info");
+    info.appendChild(el("h2", "", post.title || "(untitled)"));
 
-    const cats = (post.categoryName || []);
+    const cats = post.categoryName || [];
     if (cats.length) {
       const row = el("div", "chips");
       cats.forEach(c => row.appendChild(el("span", "chip category", c)));
-      body.appendChild(row);
+      info.appendChild(row);
     }
+    if (post.excerpt) info.appendChild(el("p", "excerpt", post.excerpt));
 
-    if (post.excerpt) body.appendChild(el("p", "excerpt", post.excerpt));
-
-    const tags = (post.tags || []);
+    const tags = post.tags || [];
     if (tags.length) {
       const row = el("div", "chips");
       tags.forEach(t => row.appendChild(el("span", "chip", "#" + t)));
-      body.appendChild(row);
+      info.appendChild(row);
     }
 
     const meta = [post.authorName, formatDate(post.createdAt)].filter(Boolean).join(" on ");
-    body.appendChild(el("div", "meta", meta));
+    if (meta) info.appendChild(el("div", "meta", meta));
 
-    card.appendChild(body);
-    return card;
+    slide.appendChild(info);
+    return slide;
   }
 
-  async function load(page) {
-    errorBox.hidden = true;
-    let target;
+  function showMessage(text) {
+    feed.replaceChildren(el("div", "msg", text));
+    slideCount = 0;
+    current = 0;
+    updateControls();
+  }
+
+  /* ---------- up / down state ---------- */
+  function hasMore() { return pageNumber + 1 < totalPages; }
+
+  function updateControls() {
+    const total = Math.max(totalElements, slideCount);
+    counter.textContent = slideCount ? (current + 1) + " / " + total : "0 / 0";
+    pageInfo.textContent = slideCount
+      ? "page " + (pageNumber + 1) + " of " + Math.max(totalPages, 1)
+      : "";
+    upBtn.disabled = !slideCount || current <= 0;
+    downBtn.disabled = !slideCount || (current >= slideCount - 1 && !hasMore());
+  }
+
+  function indexFromScroll() {
+    const h = feed.clientHeight;
+    return h ? Math.round(feed.scrollTop / h) : 0;
+  }
+
+  function go(delta) {
+    if (!slideCount) return;
+    const base = indexFromScroll();
+    const target = Math.min(Math.max(base + delta, 0), slideCount - 1);
+    feed.scrollTo({ top: target * feed.clientHeight, behavior: "smooth" });
+    if (delta > 0 && base >= slideCount - 2) loadMore();
+  }
+
+  /* ---------- loading ---------- */
+  async function fetchPage(page) {
+    const target = buildUrl(page);
+    let res;
     try {
-      target = buildUrl(page);
-    } catch (e) {
+      res = await fetch(target, { headers: buildHeaders() });
+    } catch (err) {
+      throw new Error(
+        "Could not reach " + target + "\n" +
+        "Check that the backend is running and that CORS allows this page's origin."
+      );
+    }
+    if (!res.ok) {
+      let msg = "Server responded with " + res.status + " " + res.statusText;
+      if (res.status === 401 || res.status === 403) {
+        msg += "\nThis endpoint needs authentication. Pick Basic auth or Bearer token above and enter your credentials.";
+      }
+      throw new Error(msg);
+    }
+    const data = await res.json();
+    const posts = Array.isArray(data) ? data : (data.content || []);   // Spring Page or plain array
+    const info = data.page || {};
+    return {
+      posts,
+      number: info.number ?? 0,
+      pages: info.totalPages ?? 1,
+      total: info.totalElements ?? posts.length
+    };
+  }
+
+  async function loadFirst() {
+    errorBox.hidden = true;
+    try { new URL(urlInput.value.trim()); }
+    catch (e) {
       showError("That is not a valid URL. Include the protocol, for example http://localhost:8080/post");
       return;
     }
-
-    summary.textContent = "Loading...";
-    statusBar.hidden = false;
-
+    loading = true;
+    showMessage("Loading...");
     try {
-      const res = await fetch(target, { headers: buildHeaders() });
-      if (!res.ok) {
-        let msg = "Server responded with " + res.status + " " + res.statusText;
-        if (res.status === 401 || res.status === 403) {
-          msg += "\nThis endpoint needs authentication. Pick Basic auth or Bearer token above and enter your credentials.";
-        }
-        throw new Error(msg);
-      }
-      const data = await res.json();
-
-      // Supports Spring's Page-style response ({content, page}) and a plain array
-      const posts = Array.isArray(data) ? data : (data.content || []);
-      const info = data.page || {};
-      pageNumber = info.number ?? 0;
-      totalPages = info.totalPages ?? 1;
-
-      grid.replaceChildren(...posts.map(renderPost));
-      hint.hidden = posts.length > 0 ? true : false;
-      hint.textContent = "The request worked, but there are no posts to show.";
-
-      const total = info.totalElements ?? posts.length;
-      summary.textContent =
-        "Showing " + posts.length + " of " + total + " posts. Page " +
-        (pageNumber + 1) + " of " + Math.max(totalPages, 1) + ".";
-      prevBtn.disabled = pageNumber <= 0;
-      nextBtn.disabled = pageNumber >= totalPages - 1;
+      const r = await fetchPage(0);
+      pageNumber = r.number;
+      totalPages = r.pages;
+      totalElements = r.total;
+      if (!r.posts.length) { showMessage("The request worked, but there are no posts to show."); return; }
+      feed.replaceChildren(...r.posts.map(renderSlide));
+      slideCount = r.posts.length;
+      current = 0;
+      feed.scrollTop = 0;
+      updateControls();
     } catch (err) {
-      grid.replaceChildren();
-      statusBar.hidden = true;
-      hint.hidden = true;
-      if (err instanceof TypeError) {
-        showError(
-          "Could not reach " + target + "\n" +
-          "Check that the backend is running and that CORS allows this page's origin " +
-          "(opening this file directly sends the origin \"null\")."
-        );
-      } else {
-        showError(err.message);
-      }
+      totalPages = totalElements = pageNumber = 0;
+      showMessage("Nothing loaded.");
+      showError(err.message);
+    } finally {
+      loading = false;
     }
   }
 
-  form.addEventListener("submit", e => { e.preventDefault(); load(0); });
-  prevBtn.addEventListener("click", () => load(pageNumber - 1));
-  nextBtn.addEventListener("click", () => load(pageNumber + 1));
+  async function loadMore() {
+    if (loading || !hasMore()) return;
+    loading = true;
+    try {
+      const r = await fetchPage(pageNumber + 1);
+      pageNumber = r.number;
+      totalPages = r.pages;
+      totalElements = r.total;
+      r.posts.forEach(p => feed.appendChild(renderSlide(p)));
+      slideCount += r.posts.length;
+      updateControls();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      loading = false;
+    }
+  }
+
+  /* ---------- events ---------- */
+  authMode.addEventListener("change", updateAuthFields);
+  form.addEventListener("submit", e => { e.preventDefault(); loadFirst(); });
+  upBtn.addEventListener("click", () => go(-1));
+  downBtn.addEventListener("click", () => go(1));
+
+  let ticking = false;
+  feed.addEventListener("scroll", () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      ticking = false;
+      if (!slideCount) return;
+      current = indexFromScroll();
+      updateControls();
+      if (current >= slideCount - 2) loadMore();   // pre-load next page near the end
+    });
+  });
+
+  document.addEventListener("keydown", e => {
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "select" || tag === "textarea") return;
+    if (e.key === "ArrowDown" || e.key === "j") { e.preventDefault(); go(1); }
+    if (e.key === "ArrowUp" || e.key === "k") { e.preventDefault(); go(-1); }
+  });
+
+  window.addEventListener("resize", () => {
+    feed.scrollTo({ top: current * feed.clientHeight });   // keep the current post snapped
+  });
+
+  showMessage("Enter your posts URL above and press Load posts.");
 </script>
 </body>
 </html>
