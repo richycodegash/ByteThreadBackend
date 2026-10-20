@@ -275,8 +275,8 @@
   let slideCount = 0;     // posts rendered so far
   let current = 0;        // index of the post on screen
   let pageNumber = 0;     // last page loaded
-  let totalPages = 0;
-  let totalElements = 0;
+  let more = false;           // is there another page to load?
+  let totalElements = null;   // only known when the backend returns a Page (a Slice has no total)
   let loading = false;
 
   /* ---------- helpers ---------- */
@@ -380,13 +380,15 @@
   }
 
   /* ---------- up / down state ---------- */
-  function hasMore() { return pageNumber + 1 < totalPages; }
+  function hasMore() { return more; }
 
   function updateControls() {
-    const total = Math.max(totalElements, slideCount);
+    const total = totalElements !== null
+      ? Math.max(totalElements, slideCount)
+      : slideCount + (more ? "+" : "");
     counter.textContent = slideCount ? (current + 1) + " / " + total : "0 / 0";
     pageInfo.textContent = slideCount
-      ? "page " + (pageNumber + 1) + " of " + Math.max(totalPages, 1)
+      ? "page " + (pageNumber + 1) + (more ? "" : " (last)")
       : "";
     upBtn.disabled = !slideCount || current <= 0;
     downBtn.disabled = !slideCount || (current >= slideCount - 1 && !hasMore());
@@ -427,12 +429,13 @@
     const data = await res.json();
     const posts = Array.isArray(data) ? data : (data.content || []);   // Spring Page or plain array
     const info = data.page || {};
-    return {
-      posts,
-      number: info.number ?? 0,
-      pages: info.totalPages ?? 1,
-      total: info.totalElements ?? posts.length
-    };
+    let more;
+    if (typeof data.last === "boolean") more = !data.last;              // Slice / classic Page
+    else if (typeof data.hasNext === "boolean") more = data.hasNext;    // custom DTO
+    else if (info.totalPages !== undefined) more = page + 1 < info.totalPages;   // PagedModel
+    else more = posts.length > 0;                                       // no metadata: keep going until an empty page
+    const total = info.totalElements ?? data.totalElements ?? null;
+    return { posts, number: page, more, total };
   }
 
   async function loadFirst() {
@@ -447,7 +450,7 @@
     try {
       const r = await fetchPage(0);
       pageNumber = r.number;
-      totalPages = r.pages;
+      more = r.more;
       totalElements = r.total;
       if (!r.posts.length) { showMessage("The request worked, but there are no posts to show."); return; }
       feed.replaceChildren(...r.posts.map(renderSlide));
@@ -456,7 +459,7 @@
       feed.scrollTop = 0;
       updateControls();
     } catch (err) {
-      totalPages = totalElements = pageNumber = 0;
+      more = false; totalElements = null; pageNumber = 0;
       showMessage("Nothing loaded.");
       showError(err.message);
     } finally {
@@ -470,7 +473,7 @@
     try {
       const r = await fetchPage(pageNumber + 1);
       pageNumber = r.number;
-      totalPages = r.pages;
+      more = r.more;
       totalElements = r.total;
       r.posts.forEach(p => feed.appendChild(renderSlide(p)));
       slideCount += r.posts.length;
