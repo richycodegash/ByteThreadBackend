@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -34,14 +35,14 @@ public class PostController {
     }
 
     @GetMapping("/post")
-    public ResponseEntity<Page<PostListsResponce>> getPost(
+    public ResponseEntity<Slice<PostListsResponce>> getPost(
             @RequestParam String accountName,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
             ){
         System.out.println("\n**inside get method ***\n");
-        Page<PostListsResponce> responces=postService.getPost(accountName, category, keyword, pageable);
+        Slice<PostListsResponce> responces=postService.getPost(accountName, category, keyword, pageable);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

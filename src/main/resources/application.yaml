@@ -2,7 +2,7 @@ spring:
   application:
     name: ByteThread
   profiles:
-    active: prod
+    active: dev
   servlet:
     multipart:
       max-file-size: 10MB
@@ -10,3 +10,7 @@ spring:
 
 server:
   port: 8080
+
+app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGIN:http://localhost:3000}

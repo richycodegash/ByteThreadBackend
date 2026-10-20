@@ -11,6 +11,7 @@ import com.jamboSwift.ByteThread.Utilities.HelperClass;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
@@ -119,8 +120,8 @@ public class PostService {
         return PostResponce.fromSlug(theSlug);
     }
 
-    public Page<PostListsResponce> getPost(String accountName,String category,
-                                           String keyword,Pageable pageable){
+    public Slice<PostListsResponce> getPost(String accountName, String category,
+                                            String keyword, Pageable pageable){
         if (!accountRepo.existsByAccountName(accountName)){
             System.out.println("\n**** client does not exist ****\n");
             throw new ClientNotFoundException("client conflict.");
@@ -132,7 +133,7 @@ public class PostService {
                 : "%" + keyword.trim().toLowerCase() + "%";
 
 
-        Page<Post> posts=postRepo.findPost(cleanCategory,pattern,pageable);
+        Slice<Post> posts=postRepo.findPost(cleanCategory,pattern,pageable);
 
         return posts.map(PostListsResponce::fromPost);
     }

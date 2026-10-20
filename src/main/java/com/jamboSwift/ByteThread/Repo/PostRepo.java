@@ -4,6 +4,7 @@ import com.jamboSwift.ByteThread.Models.Post;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,8 +22,8 @@ public interface PostRepo extends JpaRepository<Post, UUID> {
                OR EXISTS (SELECT c FROM p.categories c WHERE c.name = :category))
           AND (LOWER(p.title) LIKE :pattern OR LOWER(p.content) LIKE :pattern)
         """)
-    Page<Post> findPost(@Param("category") String category,
-                        @Param("pattern") String pattern, @NonNull Pageable pageable);
+    Slice<Post> findPost(@Param("category") String category,
+                         @Param("pattern") String pattern, @NonNull Pageable pageable);
 
     Page<Post> findBySlug(String slug, Pageable pageable);
 
