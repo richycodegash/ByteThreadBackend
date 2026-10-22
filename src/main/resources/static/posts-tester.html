@@ -218,6 +218,68 @@
     #counter, #pageInfo { color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); }
     .info { padding-right: 76px; }
   }
+
+  /* ---------- full post reader ---------- */
+  .slide { cursor: pointer; }
+  .slide:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+
+  #reader {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    overflow-y: auto;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .r-bar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .r-close {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: inherit;
+    padding: 7px 14px;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .r-close:hover { background: var(--bg); }
+  .r-close svg { width: 16px; height: 16px; }
+  .r-article { max-width: 760px; margin: 0 auto; padding: 24px 18px 64px; }
+  .r-hero {
+    margin-bottom: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0d1117;
+  }
+  .r-hero img { display: block; width: 100%; max-height: 60vh; object-fit: contain; }
+  .r-hero .ph { height: 220px; }
+  .r-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .r-chip {
+    font-size: 0.78rem;
+    padding: 2px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .r-chip.category { border-color: var(--accent); color: var(--accent); }
+  .r-article h1 { margin: 0 0 8px; font-size: 1.9rem; line-height: 1.25; }
+  .r-meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; }
+  .r-content {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .r-tags { margin-top: 28px; }
 </style>
 </head>
 <body>
@@ -258,6 +320,16 @@
   </div>
 </main>
 
+<div id="reader" role="dialog" aria-modal="true" aria-labelledby="readerTitle" hidden>
+  <div class="r-bar">
+    <button type="button" class="r-close" id="readerClose">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      Back to feed
+    </button>
+  </div>
+  <article class="r-article" id="readerBody"></article>
+</div>
+
 <script>
   const form = document.getElementById("form");
   const urlInput = document.getElementById("url");
@@ -271,6 +343,9 @@
   const downBtn = document.getElementById("down");
   const counter = document.getElementById("counter");
   const pageInfo = document.getElementById("pageInfo");
+  const reader = document.getElementById("reader");
+  const readerBody = document.getElementById("readerBody");
+  const readerClose = document.getElementById("readerClose");
 
   let slideCount = 0;     // posts rendered so far
   let current = 0;        // index of the post on screen
@@ -332,7 +407,11 @@
 
   function renderSlide(post) {
     const slide = el("section", "slide");
-    slide.setAttribute("aria-label", post.title || "Post");
+    slide.setAttribute("aria-label", "Open post: " + (post.title || "untitled"));
+    slide.tabIndex = 0;
+    slide.setAttribute("role", "button");
+    slide.addEventListener("click", () => openReader(post));
+    slide.addEventListener("keydown", e => { if (e.key === "Enter") openReader(post); });
 
     const media = el("div", "media");
     if (post.imageUrl) {
@@ -371,6 +450,66 @@
     slide.appendChild(info);
     return slide;
   }
+
+  /* ---------- full post view ---------- */
+  let lastFocus = null;
+
+  function openReader(post) {
+    lastFocus = document.activeElement;
+    const parts = [];
+
+    const hero = el("div", "r-hero");
+    if (post.imageUrl) {
+      const img = el("img");
+      img.alt = post.title || "Post image";
+      img.src = post.imageUrl;
+      img.onerror = () => hero.replaceChildren(makePlaceholder());
+      hero.appendChild(img);
+    } else {
+      hero.appendChild(makePlaceholder());
+    }
+    parts.push(hero);
+
+    const cats = post.categoryName || [];
+    if (cats.length) {
+      const row = el("div", "r-chips");
+      cats.forEach(c => row.appendChild(el("span", "r-chip category", c)));
+      parts.push(row);
+    }
+
+    const title = el("h1", "", post.title || "(untitled)");
+    title.id = "readerTitle";
+    parts.push(title);
+
+    const meta = [post.authorName, formatDate(post.createdAt)].filter(Boolean).join(" on ");
+    if (meta) parts.push(el("div", "r-meta", meta));
+
+    const content = post.content === null || post.content === undefined || post.content === ""
+      ? "(This post has no content.)"
+      : String(post.content);
+    parts.push(el("div", "r-content", content));   // textContent, so HTML in a post can't run
+
+    const tags = post.tags || [];
+    if (tags.length) {
+      const row = el("div", "r-chips r-tags");
+      tags.forEach(t => row.appendChild(el("span", "r-chip", "#" + t)));
+      parts.push(row);
+    }
+
+    readerBody.replaceChildren(...parts);
+    reader.hidden = false;
+    reader.scrollTop = 0;
+    document.body.style.overflow = "hidden";
+    readerClose.focus();
+  }
+
+  function closeReader() {
+    reader.hidden = true;
+    document.body.style.overflow = "";
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  readerClose.addEventListener("click", closeReader);
 
   function showMessage(text) {
     feed.replaceChildren(el("div", "msg", text));
@@ -505,6 +644,10 @@
   });
 
   document.addEventListener("keydown", e => {
+    if (!reader.hidden) {                 // reader open: Esc closes it, feed keys are ignored
+      if (e.key === "Escape") closeReader();
+      return;
+    }
     const tag = (e.target.tagName || "").toLowerCase();
     if (tag === "input" || tag === "select" || tag === "textarea") return;
     if (e.key === "ArrowDown" || e.key === "j") { e.preventDefault(); go(1); }
