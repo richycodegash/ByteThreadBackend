@@ -20,11 +20,12 @@ public record PostListsResponce(
         String excerpt,
         String authorName,
         String imageUrl,
+        Long commentCount,
         Set<String> categoryName,
         Set<String> tags,
         LocalDateTime createdAt
 ) {
-    public static PostListsResponce fromPost(Post post){
+    public static PostListsResponce fromPost(Post post,Long count){
         Set<String> categories=new HashSet<>();
         for (Category category:post.getCategories()){
             String categoryName=category.getName();
@@ -48,6 +49,7 @@ public record PostListsResponce(
                 .slug(post.getSlug())
                 .postId(post.getId())
                 .tags(tags)
+                .commentCount(count)
                 .imageUrl(post.getImageUrl())
                 .build();
     }

@@ -39,7 +39,7 @@ public class PostController {
             @RequestParam String accountName,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
             ){
         System.out.println("\n**inside get method ***\n");
         Slice<PostListsResponce> responces=postService.getPost(accountName, category, keyword, pageable);

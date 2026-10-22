@@ -18,6 +18,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -30,6 +31,7 @@ public class PostService {
     private final RandomGeneratorHelper randomGeneratorHelper;
     private final AccountRepo accountRepo;
     private final CloudinaryService cloudinaryService;
+    private final CommentRepo commentRepo;
 
     @Transactional
     public PostResponce postThemShit(PostRequest request, MultipartFile file){
@@ -135,7 +137,25 @@ public class PostService {
 
         Slice<Post> posts=postRepo.findPost(cleanCategory,pattern,pageable);
 
-        return posts.map(PostListsResponce::fromPost);
+        List<UUID> postIds = posts.getContent().stream()
+                .map(Post::getId)
+                .toList();
+
+        // 2. Fetch all comment counts for these posts in a SINGLE database query
+        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
+        return posts.map(post -> {
+            long count = commentCountMap.getOrDefault(post.getId(), 0L);
+            return PostListsResponce.fromPost(post, count);
+        });
+
+        //return posts.map(PostListsResponce::fromPost);
     }
 
     public Page<PostListsResponce> getPostWithSlug(String accountName,String postTitle,Pageable pageable){
@@ -147,8 +167,24 @@ public class PostService {
 
         Page<Post> post=postRepo.findByTitleContainingIgnoreCase(slug,pageable);
 
+        List<UUID> postIds = post.getContent().stream()
+                .map(Post::getId)
+                .toList();
 
-        return post.map(PostListsResponce::fromPost);
+        // 2. Fetch all comment counts for these posts in a SINGLE database query
+        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Long) row[1]
+                ));
+
+
+        // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
+        return post.map(thePost -> {
+            long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
+            return PostListsResponce.fromPost(thePost, count);
+        });
 
     }
 
@@ -161,7 +197,24 @@ public class PostService {
 
         Page<Post> posts=postRepo.findByAccount(accName, pageable);
 
-        return posts.map(PostListsResponce::fromPost);
+        List<UUID> postIds = posts.getContent().stream()
+                .map(Post::getId)
+                .toList();
+
+        // 2. Fetch all comment counts for these posts in a SINGLE database query
+        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Long) row[1]
+                ));
+
+
+        // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
+        return posts.map(thePost -> {
+            long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
+            return PostListsResponce.fromPost(thePost, count);
+        });
 
     }
 
@@ -200,7 +253,9 @@ public class PostService {
 
         postRepo.save(post);
 
-        return PostListsResponce.fromPost(post);
+        Long commentCount=commentRepo.countByPostId(post.getId());
+
+        return PostListsResponce.fromPost(post,commentCount);
     }
 
     public void deletePost(DeletePostRequest request){
@@ -241,7 +296,24 @@ public class PostService {
 
         Page<Post> posts=postRepo.findByTags_Slug(tag.getSlug(),pageable);
 
-        return posts.map(PostListsResponce::fromPost);
+        List<UUID> postIds = posts.getContent().stream()
+                .map(Post::getId)
+                .toList();
+
+        // 2. Fetch all comment counts for these posts in a SINGLE database query
+        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Long) row[1]
+                ));
+
+
+        // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
+        return posts.map(thePost -> {
+            long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
+            return PostListsResponce.fromPost(thePost, count);
+        });
     }
 
 }
