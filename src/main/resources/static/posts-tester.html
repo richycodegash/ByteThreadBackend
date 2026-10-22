@@ -51,7 +51,8 @@
     padding: 10px 16px;
   }
   form, .auth { display: flex; gap: 8px; max-width: 900px; margin: 0 auto; }
-  .auth { margin-top: 8px; }
+  .auth { margin-top: 8px; flex-wrap: wrap; }
+  .auth input { min-width: 150px; }
   .auth select { flex: 0 0 auto; }
   input, select {
     flex: 1;
@@ -219,6 +220,46 @@
     .info { padding-right: 76px; }
   }
 
+  /* ---------- tag filter bar + clickable tags ---------- */
+  #tagBar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    font-size: 0.92rem;
+  }
+  #tagBar strong { color: var(--accent); }
+  .link-btn {
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 4px 12px;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .link-btn:hover { background: var(--bg); }
+  button.chip {
+    font: inherit;
+    font-size: 0.75rem;
+    color: #fff;
+    background: transparent;
+    cursor: pointer;
+  }
+  button.chip:hover { background: rgba(255, 255, 255, 0.22); }
+  button.r-chip {
+    font: inherit;
+    font-size: 0.78rem;
+    background: transparent;
+    cursor: pointer;
+  }
+  button.r-chip:hover { border-color: var(--accent); color: var(--accent); }
+
   /* ---------- full post reader ---------- */
   .slide { cursor: pointer; }
   .slide:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
@@ -273,6 +314,17 @@
   .r-chip.category { border-color: var(--accent); color: var(--accent); }
   .r-article h1 { margin: 0 0 8px; font-size: 1.9rem; line-height: 1.25; }
   .r-meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; }
+  .r-author {
+    font: inherit;
+    padding: 0;
+    color: var(--accent);
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .r-author:hover { color: var(--accent-dark); }
   .r-content {
     font-size: 1.05rem;
     line-height: 1.7;
@@ -286,9 +338,10 @@
 
 <header>
   <form id="form">
-    <input type="text" id="url" aria-label="Posts URL"
-           value="http://localhost:8080/post"
-           placeholder="http://localhost:8080/post" autocomplete="off" spellcheck="false">
+    <input type="text" id="url" aria-label="Backend base URL" list="recentBases"
+           value="http://localhost:8080"
+           placeholder="Backend base URL, e.g. http://localhost:8080" autocomplete="off" spellcheck="false">
+    <datalist id="recentBases"></datalist>
     <button type="submit" class="load">Load posts</button>
   </form>
   <div class="auth">
@@ -300,8 +353,14 @@
     <input type="text" id="authUser" placeholder="Username" autocomplete="off" hidden>
     <input type="password" id="authPass" placeholder="Password" autocomplete="off" hidden>
     <input type="text" id="authToken" placeholder="Paste token" autocomplete="off" spellcheck="false" hidden>
+    <input type="text" id="account" aria-label="Account name" placeholder="Your account name (added to every request)" autocomplete="off" spellcheck="false">
   </div>
 </header>
+
+<div id="tagBar" hidden>
+  <span id="tagLabel"></span>
+  <button type="button" class="link-btn" id="tagClear">Back to all posts</button>
+</div>
 
 <div id="error" hidden></div>
 
@@ -346,6 +405,18 @@
   const reader = document.getElementById("reader");
   const readerBody = document.getElementById("readerBody");
   const readerClose = document.getElementById("readerClose");
+  const accountInput = document.getElementById("account");
+  const recentBases = document.getElementById("recentBases");
+  const tagBar = document.getElementById("tagBar");
+  const tagLabel = document.getElementById("tagLabel");
+  const tagClear = document.getElementById("tagClear");
+
+  // Every request is  <base URL field> + API_BASE_PATH + one of:
+  //   /post?accountName=<account>            main feed
+  //   /<tag>/posts?accountName=<account>     posts under a tag
+  //   /<account>/post                        posts of one account
+  const API_BASE_PATH = "/api/jamboSwift";
+  const source = { tag: null, author: null };   // both null = all posts; otherwise a tag or an account being browsed
 
   let slideCount = 0;     // posts rendered so far
   let current = 0;        // index of the post on screen
@@ -383,10 +454,30 @@
     return headers;
   }
 
+  function getBase() {
+    let v = urlInput.value.trim().replace(/\/+$/, "");
+    if (!v) throw new Error("empty");
+    if (!/^https?:\/\//i.test(v)) {   // no protocol typed: local addresses get http, anything else https
+      v = (/^(localhost|127\.|192\.168\.|10\.)/i.test(v) ? "http://" : "https://") + v;
+    }
+    new URL(v);                         // throws if it still is not a valid URL
+    return v;
+  }
+
   function buildUrl(page) {
-    const url = new URL(urlInput.value.trim());
+    const base = getBase() + API_BASE_PATH;
+    const account = accountInput.value.trim();
+    let url;
+    if (source.author) {
+      url = new URL(base + "/" + encodeURIComponent(source.author) + "/post");
+    } else if (source.tag) {
+      url = new URL(base + "/" + encodeURIComponent(source.tag) + "/posts");
+      url.searchParams.set("accountName", account);
+    } else {
+      url = new URL(base + "/post");
+      if (account) url.searchParams.set("accountName", account);
+    }
     if (page > 0) url.searchParams.set("page", page);
-    else url.searchParams.delete("page");
     return url.toString();
   }
 
@@ -409,9 +500,8 @@
     const slide = el("section", "slide");
     slide.setAttribute("aria-label", "Open post: " + (post.title || "untitled"));
     slide.tabIndex = 0;
-    slide.setAttribute("role", "button");
     slide.addEventListener("click", () => openReader(post));
-    slide.addEventListener("keydown", e => { if (e.key === "Enter") openReader(post); });
+    slide.addEventListener("keydown", e => { if (e.target === slide && e.key === "Enter") openReader(post); });
 
     const media = el("div", "media");
     if (post.imageUrl) {
@@ -440,7 +530,7 @@
     const tags = post.tags || [];
     if (tags.length) {
       const row = el("div", "chips");
-      tags.forEach(t => row.appendChild(el("span", "chip", "#" + t)));
+      tags.forEach(t => row.appendChild(tagButton("chip", t)));
       info.appendChild(row);
     }
 
@@ -449,6 +539,72 @@
 
     slide.appendChild(info);
     return slide;
+  }
+
+  /* ---------- remembered backend addresses ---------- */
+  function renderBases() {
+    try {
+      const list = JSON.parse(localStorage.getItem("postsTester.bases") || "[]");
+      recentBases.replaceChildren(...list.map(b => {
+        const o = document.createElement("option");
+        o.value = b;
+        return o;
+      }));
+    } catch (e) {}
+  }
+
+  function rememberBase() {
+    try {
+      const base = getBase();
+      localStorage.setItem("postsTester.base", base);
+      const list = JSON.parse(localStorage.getItem("postsTester.bases") || "[]").filter(b => b !== base);
+      list.unshift(base);
+      localStorage.setItem("postsTester.bases", JSON.stringify(list.slice(0, 5)));
+    } catch (e) {}
+    renderBases();
+  }
+
+  /* ---------- tags ---------- */
+  function tagButton(className, tag) {
+    const b = el("button", className, "#" + tag);
+    b.type = "button";
+    b.title = "Show posts tagged #" + tag;
+    b.addEventListener("click", e => { e.stopPropagation(); openTag(tag); });
+    return b;
+  }
+
+  function updateTagBar() {
+    tagBar.hidden = !source.tag && !source.author;
+    tagLabel.replaceChildren();
+    if (source.author) {
+      tagLabel.append("Posts by ");
+      tagLabel.appendChild(el("strong", "", source.author));
+    } else if (source.tag) {
+      tagLabel.append("Posts tagged ");
+      tagLabel.appendChild(el("strong", "", "#" + source.tag));
+    }
+  }
+
+  function openTag(tag) {
+    if (!accountInput.value.trim()) {
+      if (!reader.hidden) closeReader();
+      showError("Enter your account name in the field at the top, then press the tag again.");
+      accountInput.focus();
+      return;
+    }
+    if (!reader.hidden) closeReader();
+    source.tag = tag;
+    source.author = null;
+    updateTagBar();
+    loadFirst();
+  }
+
+  function openAuthor(author) {
+    if (!reader.hidden) closeReader();
+    source.author = author;
+    source.tag = null;
+    updateTagBar();
+    loadFirst();
   }
 
   /* ---------- full post view ---------- */
@@ -481,8 +637,17 @@
     title.id = "readerTitle";
     parts.push(title);
 
-    const meta = [post.authorName, formatDate(post.createdAt)].filter(Boolean).join(" on ");
-    if (meta) parts.push(el("div", "r-meta", meta));
+    const metaRow = el("div", "r-meta");
+    if (post.authorName) {
+      const a = el("button", "r-author", post.authorName);
+      a.type = "button";
+      a.title = "Show posts by " + post.authorName;
+      a.addEventListener("click", () => openAuthor(post.authorName));
+      metaRow.appendChild(a);
+    }
+    const when = formatDate(post.createdAt);
+    if (when) metaRow.append((post.authorName ? " on " : "") + when);
+    if (metaRow.childNodes.length) parts.push(metaRow);
 
     const content = post.content === null || post.content === undefined || post.content === ""
       ? "(This post has no content.)"
@@ -492,7 +657,7 @@
     const tags = post.tags || [];
     if (tags.length) {
       const row = el("div", "r-chips r-tags");
-      tags.forEach(t => row.appendChild(el("span", "r-chip", "#" + t)));
+      tags.forEach(t => row.appendChild(tagButton("r-chip", t)));
       parts.push(row);
     }
 
@@ -560,6 +725,9 @@
     }
     if (!res.ok) {
       let msg = "Server responded with " + res.status + " " + res.statusText;
+      if (res.status === 400) {
+        msg += "\nIf the backend expects accountName, enter your account name in the field at the top.";
+      }
       if (res.status === 401 || res.status === 403) {
         msg += "\nThis endpoint needs authentication. Pick Basic auth or Bearer token above and enter your credentials.";
       }
@@ -579,19 +747,20 @@
 
   async function loadFirst() {
     errorBox.hidden = true;
-    try { new URL(urlInput.value.trim()); }
+    try { getBase(); }
     catch (e) {
-      showError("That is not a valid URL. Include the protocol, for example http://localhost:8080/post");
+      showError("Enter the backend base URL, for example http://localhost:8080 or https://your-backend.example.com");
       return;
     }
     loading = true;
     showMessage("Loading...");
     try {
       const r = await fetchPage(0);
+      rememberBase();   // only keep addresses that actually worked
       pageNumber = r.number;
       more = r.more;
       totalElements = r.total;
-      if (!r.posts.length) { showMessage("The request worked, but there are no posts to show."); return; }
+      if (!r.posts.length) { showMessage(source.author ? "No posts found for " + source.author + "." : source.tag ? "No posts found for #" + source.tag + "." : "The request worked, but there are no posts to show."); return; }
       feed.replaceChildren(...r.posts.map(renderSlide));
       slideCount = r.posts.length;
       current = 0;
@@ -626,7 +795,25 @@
 
   /* ---------- events ---------- */
   authMode.addEventListener("change", updateAuthFields);
-  form.addEventListener("submit", e => { e.preventDefault(); loadFirst(); });
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    source.tag = null;          // Load posts always goes back to the full feed
+    source.author = null;
+    updateTagBar();
+    loadFirst();
+  });
+  tagClear.addEventListener("click", () => { source.tag = null; source.author = null; updateTagBar(); loadFirst(); });
+
+  // remember the account name between visits (wrapped in try/catch: storage can be unavailable)
+  try { accountInput.value = localStorage.getItem("postsTester.account") || ""; } catch (e) {}
+  accountInput.addEventListener("input", () => {
+    try { localStorage.setItem("postsTester.account", accountInput.value.trim()); } catch (e) {}
+  });
+
+  // base URL: the last one that worked, else the address this page is served from, else localhost
+  if (location.protocol.startsWith("http")) urlInput.value = location.origin;
+  try { urlInput.value = localStorage.getItem("postsTester.base") || urlInput.value; } catch (e) {}
+  renderBases();
   upBtn.addEventListener("click", () => go(-1));
   downBtn.addEventListener("click", () => go(1));
 
