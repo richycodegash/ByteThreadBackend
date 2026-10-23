@@ -454,14 +454,23 @@
     return headers;
   }
 
-  function getBase() {
-    let v = urlInput.value.trim().replace(/\/+$/, "");
+  function normalizeBase(raw) {
+    let v = raw.trim();
     if (!v) throw new Error("empty");
     if (!/^https?:\/\//i.test(v)) {   // no protocol typed: local addresses get http, anything else https
       v = (/^(localhost|127\.|192\.168\.|10\.)/i.test(v) ? "http://" : "https://") + v;
     }
-    new URL(v);                         // throws if it still is not a valid URL
-    return v;
+    const u = new URL(v);               // throws if it is not a valid URL
+    let path = u.pathname.replace(/\/+$/, "");
+    const i = path.toLowerCase().indexOf(API_BASE_PATH.toLowerCase());
+    if (i !== -1) path = path.slice(0, i);   // a full API address was pasted: keep only what comes before /api/jamboSwift
+    return u.origin + path;             // query string and #hash are dropped on purpose
+  }
+
+  function getBase() {
+    const base = normalizeBase(urlInput.value);
+    if (urlInput.value !== base) urlInput.value = base;   // show the cleaned address in the field
+    return base;
   }
 
   function buildUrl(page) {
@@ -544,7 +553,8 @@
   /* ---------- remembered backend addresses ---------- */
   function renderBases() {
     try {
-      const list = JSON.parse(localStorage.getItem("postsTester.bases") || "[]");
+      const raw = JSON.parse(localStorage.getItem("postsTester.bases") || "[]");
+      const list = [...new Set(raw.map(b => { try { return normalizeBase(b); } catch (e) { return null; } }).filter(Boolean))];
       recentBases.replaceChildren(...list.map(b => {
         const o = document.createElement("option");
         o.value = b;
@@ -813,6 +823,7 @@
   // base URL: the last one that worked, else the address this page is served from, else localhost
   if (location.protocol.startsWith("http")) urlInput.value = location.origin;
   try { urlInput.value = localStorage.getItem("postsTester.base") || urlInput.value; } catch (e) {}
+  try { getBase(); } catch (e) {}   // tidies a saved or pasted full URL down to the base address
   renderBases();
   upBtn.addEventListener("click", () => go(-1));
   downBtn.addEventListener("click", () => go(1));
