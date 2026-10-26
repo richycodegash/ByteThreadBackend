@@ -424,6 +424,9 @@
   let more = false;           // is there another page to load?
   let totalElements = null;   // only known when the backend returns a Page (a Slice has no total)
   let loading = false;
+  const PRELOAD_AHEAD = 3;    // start loading the next page when this many posts (or fewer) are left to scroll
+  let feedId = 0;             // changes whenever a new feed starts, so late answers for an old feed are thrown away
+  let prefetched = null;      // { id, page, promise }: the next page, already requested in the background
 
   /* ---------- helpers ---------- */
   function el(tag, className, text) {
@@ -516,7 +519,8 @@
     if (post.imageUrl) {
       const img = el("img");
       img.alt = post.title || "Post image";
-      img.loading = "lazy";
+      img.loading = "eager";      // the feed scrolls one post at a time, so lazy loading only causes a blank flash
+      img.decoding = "async";
       img.src = post.imageUrl;
       img.onerror = () => media.replaceChildren(makePlaceholder());  // broken link -> placeholder
       media.appendChild(img);
@@ -718,7 +722,7 @@
     const base = indexFromScroll();
     const target = Math.min(Math.max(base + delta, 0), slideCount - 1);
     feed.scrollTo({ top: target * feed.clientHeight, behavior: "smooth" });
-    if (delta > 0 && base >= slideCount - 2) loadMore();
+    if (delta > 0 && nearEnd(base)) loadMore();
   }
 
   /* ---------- loading ---------- */
@@ -755,6 +759,21 @@
     return { posts, number: page, more, total };
   }
 
+  function nearEnd(index) {
+    return slideCount - 1 - index <= PRELOAD_AHEAD;
+  }
+
+  // Ask for the next page in the background, so it is ready before the user gets there.
+  function startPrefetch() {
+    if (!more) { prefetched = null; return; }
+    const id = feedId;
+    const page = pageNumber + 1;
+    if (prefetched && prefetched.id === id && prefetched.page === page) return;
+    const promise = fetchPage(page);
+    promise.catch(() => {});      // a failure is reported later, when the page is actually needed
+    prefetched = { id, page, promise };
+  }
+
   async function loadFirst() {
     errorBox.hidden = true;
     try { getBase(); }
@@ -762,45 +781,67 @@
       showError("Enter the backend base URL, for example http://localhost:8080 or https://your-backend.example.com");
       return;
     }
+    const id = ++feedId;          // this is now the newest feed; anything still loading for an older one is ignored
+    prefetched = null;
     loading = true;
     showMessage("Loading...");
+    let loaded = false;
     try {
       const r = await fetchPage(0);
+      if (id !== feedId) return;
       rememberBase();   // only keep addresses that actually worked
       pageNumber = r.number;
       more = r.more;
       totalElements = r.total;
-      if (!r.posts.length) { showMessage(source.author ? "No posts found for " + source.author + "." : source.tag ? "No posts found for #" + source.tag + "." : "The request worked, but there are no posts to show."); return; }
+      if (!r.posts.length) {
+        showMessage(source.author ? "No posts found for " + source.author + "." : source.tag ? "No posts found for #" + source.tag + "." : "The request worked, but there are no posts to show.");
+        return;
+      }
       feed.replaceChildren(...r.posts.map(renderSlide));
       slideCount = r.posts.length;
       current = 0;
       feed.scrollTop = 0;
       updateControls();
+      startPrefetch();
+      loaded = true;
     } catch (err) {
+      if (id !== feedId) return;
       more = false; totalElements = null; pageNumber = 0;
       showMessage("Nothing loaded.");
       showError(err.message);
     } finally {
-      loading = false;
+      if (id === feedId) loading = false;
     }
+    if (loaded && nearEnd(0)) loadMore();   // very small pages: the next one is needed straight away
   }
 
   async function loadMore() {
-    if (loading || !hasMore()) return;
+    if (loading || !more) return;
     loading = true;
+    const id = feedId;
+    const page = pageNumber + 1;
+    let appended = false;
     try {
-      const r = await fetchPage(pageNumber + 1);
+      const job = prefetched && prefetched.id === id && prefetched.page === page
+        ? prefetched.promise          // already on its way (or here) from the background request
+        : fetchPage(page);
+      prefetched = null;
+      const r = await job;
+      if (id !== feedId) return;
       pageNumber = r.number;
       more = r.more;
       totalElements = r.total;
       r.posts.forEach(p => feed.appendChild(renderSlide(p)));
       slideCount += r.posts.length;
+      appended = r.posts.length > 0;
       updateControls();
+      startPrefetch();                // line up the page after this one
     } catch (err) {
-      showError(err.message);
+      if (id === feedId) showError(err.message);
     } finally {
-      loading = false;
+      if (id === feedId) loading = false;
     }
+    if (appended && id === feedId && nearEnd(current)) loadMore();
   }
 
   /* ---------- events ---------- */
@@ -837,7 +878,7 @@
       if (!slideCount) return;
       current = indexFromScroll();
       updateControls();
-      if (current >= slideCount - 2) loadMore();   // pre-load next page near the end
+      if (nearEnd(current)) loadMore();   // load the next page when only a few posts are left
     });
   });
 
