@@ -16,8 +16,11 @@ public interface CommentRepo extends JpaRepository<Comment, UUID> {
 
     Slice<Comment> findByParentComment_Id(Pageable pageable,UUID parentCommentId);
 
-    @Query("SELECT c.post.id, COUNT(c) FROM Comment c WHERE c.post.id IN :postIds GROUP BY c.post.id")
-    List<Object[]> countCommentsByPostIds(@Param("postIds") List<UUID> postIds);
+    @Query("SELECT c.post.id, COUNT(c) FROM Comment c WHERE c.post.id IN :postIds AND c.commentType = :commentType GROUP BY c.post.id")
+    List<Object[]> countCommentsByPostIds(
+            @Param("postIds") List<UUID> postIds,
+            @Param("commentType") CommentType commentType
+    );
 
     long countByPostId(UUID postId);
 }

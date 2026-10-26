@@ -1,6 +1,7 @@
 package com.jamboSwift.ByteThread.Services;
 
 import com.jamboSwift.ByteThread.DTO.*;
+import com.jamboSwift.ByteThread.Enums.CommentType;
 import com.jamboSwift.ByteThread.Enums.Roles;
 import com.jamboSwift.ByteThread.Exceptions.ClientNotFoundException;
 import com.jamboSwift.ByteThread.Exceptions.InvalidCredantials;
@@ -142,7 +143,7 @@ public class PostService {
                 .toList();
 
         // 2. Fetch all comment counts for these posts in a SINGLE database query
-        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds)
+        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds, CommentType.PARENT_COMMENT)
                 .stream()
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
@@ -172,7 +173,7 @@ public class PostService {
                 .toList();
 
         // 2. Fetch all comment counts for these posts in a SINGLE database query
-        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds)
+        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds, CommentType.PARENT_COMMENT)
                 .stream()
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
@@ -202,7 +203,7 @@ public class PostService {
                 .toList();
 
         // 2. Fetch all comment counts for these posts in a SINGLE database query
-        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds)
+        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds, CommentType.PARENT_COMMENT)
                 .stream()
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
@@ -301,7 +302,7 @@ public class PostService {
                 .toList();
 
         // 2. Fetch all comment counts for these posts in a SINGLE database query
-        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds)
+        Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds, CommentType.PARENT_COMMENT)
                 .stream()
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
