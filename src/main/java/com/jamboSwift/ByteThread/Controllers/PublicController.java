@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("api/jamboSwift/public")
 @RequiredArgsConstructor
 public class PublicController {
-    private ClientService clientService;
+    private final ClientService clientService;
     private int counter=1;
 
     @PostMapping("/register")
