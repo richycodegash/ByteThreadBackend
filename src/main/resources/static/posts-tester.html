@@ -220,6 +220,31 @@
     .info { padding-right: 76px; }
   }
 
+  /* ---------- sign-in page ---------- */
+  .login {
+    align-self: center;
+    width: min(100%, 380px);
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .login h2 { margin: 0 0 6px; font-size: 1.3rem; }
+  .login-note { margin: 0 0 16px; color: var(--muted); font-size: 0.88rem; }
+  #loginForm { flex-direction: column; gap: 6px; max-width: none; margin: 0; }
+  #loginForm label { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+  #loginForm input { flex: none; }
+  #loginForm button { margin-top: 4px; }
+  .login-error { min-height: 1.3em; margin: 6px 0 0; color: var(--error-text); font-size: 0.9rem; }
+  #session {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
   /* ---------- tag filter bar + clickable tags ---------- */
   #tagBar {
     flex: 0 0 auto;
@@ -345,15 +370,11 @@
     <button type="submit" class="load">Load posts</button>
   </form>
   <div class="auth">
-    <select id="authMode" aria-label="Authentication">
-      <option value="none">No auth</option>
-      <option value="basic">Basic auth</option>
-      <option value="bearer">Bearer token (JWT)</option>
-    </select>
-    <input type="text" id="authUser" placeholder="Username" autocomplete="off" hidden>
-    <input type="password" id="authPass" placeholder="Password" autocomplete="off" hidden>
-    <input type="text" id="authToken" placeholder="Paste token" autocomplete="off" spellcheck="false" hidden>
     <input type="text" id="account" aria-label="Account name" placeholder="Your account name (added to every request)" autocomplete="off" spellcheck="false">
+    <div id="session" hidden>
+      <span id="sessionLabel"></span>
+      <button type="button" class="link-btn" id="signOut">Sign out</button>
+    </div>
   </div>
 </header>
 
@@ -365,9 +386,22 @@
 <div id="error" hidden></div>
 
 <main>
-  <div class="phone"><div id="feed"></div></div>
+  <section id="login" class="login" aria-labelledby="loginTitle">
+    <h2 id="loginTitle">Sign in</h2>
+    <p class="login-note">Your details are kept only in this page's memory and sent with each request. Refreshing or closing the page signs you out.</p>
+    <form id="loginForm">
+      <label for="loginEmail">Email</label>
+      <input type="email" id="loginEmail" autocomplete="email" spellcheck="false">
+      <label for="loginPass">Password</label>
+      <input type="password" id="loginPass" autocomplete="current-password">
+      <div id="loginError" class="login-error" role="alert"></div>
+      <button type="submit" class="load">Sign in</button>
+    </form>
+  </section>
 
-  <div id="controls">
+  <div class="phone" id="phone" hidden><div id="feed"></div></div>
+
+  <div id="controls" hidden>
     <button type="button" class="nav" id="up" aria-label="Previous post" title="Previous (Up arrow)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15l7-7 7 7"/></svg>
     </button>
@@ -392,10 +426,17 @@
 <script>
   const form = document.getElementById("form");
   const urlInput = document.getElementById("url");
-  const authMode = document.getElementById("authMode");
-  const authUser = document.getElementById("authUser");
-  const authPass = document.getElementById("authPass");
-  const authToken = document.getElementById("authToken");
+  const loginBox = document.getElementById("login");
+  const loginForm = document.getElementById("loginForm");
+  const loginEmail = document.getElementById("loginEmail");
+  const loginPass = document.getElementById("loginPass");
+  const loginError = document.getElementById("loginError");
+  const phoneBox = document.getElementById("phone");
+  const controlsBox = document.getElementById("controls");
+  const sessionBox = document.getElementById("session");
+  const sessionLabel = document.getElementById("sessionLabel");
+  const signOutBtn = document.getElementById("signOut");
+  let credentials = null;     // { email, password }, kept only in memory: gone on refresh or sign out
   const errorBox = document.getElementById("error");
   const feed = document.getElementById("feed");
   const upBtn = document.getElementById("up");
@@ -441,18 +482,11 @@
     errorBox.hidden = false;
   }
 
-  function updateAuthFields() {
-    authUser.hidden = authPass.hidden = authMode.value !== "basic";
-    authToken.hidden = authMode.value !== "bearer";
-  }
-
   function buildHeaders() {
     const headers = { "Accept": "application/json" };
-    if (authMode.value === "basic") {
-      const bytes = new TextEncoder().encode(authUser.value + ":" + authPass.value);
+    if (credentials) {          // HTTP Basic: email as the username
+      const bytes = new TextEncoder().encode(credentials.email + ":" + credentials.password);
       headers["Authorization"] = "Basic " + btoa(String.fromCharCode(...bytes));
-    } else if (authMode.value === "bearer") {
-      headers["Authorization"] = "Bearer " + authToken.value.trim();
     }
     return headers;
   }
@@ -742,10 +776,12 @@
       if (res.status === 400) {
         msg += "\nIf the backend expects accountName, enter your account name in the field at the top.";
       }
-      if (res.status === 401 || res.status === 403) {
-        msg += "\nThis endpoint needs authentication. Pick Basic auth or Bearer token above and enter your credentials.";
+      if (res.status === 403) {
+        msg += "\nYou are signed in, but this account is not allowed to use this endpoint.";
       }
-      throw new Error(msg);
+      const err = new Error(msg);
+      err.status = res.status;   // lets callers tell a wrong login (401) from other failures
+      throw err;
     }
     const data = await res.json();
     const posts = Array.isArray(data) ? data : (data.content || []);   // Spring Page or plain array
@@ -757,6 +793,39 @@
     else more = posts.length > 0;                                       // no metadata: keep going until an empty page
     const total = info.totalElements ?? data.totalElements ?? null;
     return { posts, number: page, more, total };
+  }
+
+  /* ---------- sign in / sign out ---------- */
+  function setLoggedIn(on) {
+    loginBox.hidden = on;
+    phoneBox.hidden = !on;
+    controlsBox.hidden = !on;
+    sessionBox.hidden = !on;
+    sessionLabel.textContent = on && credentials ? "Signed in as " + credentials.email : "";
+  }
+
+  function showLogin(message) {
+    setLoggedIn(false);
+    loginError.textContent = message || "";
+    loginPass.value = "";
+    (loginEmail.value ? loginPass : loginEmail).focus();
+  }
+
+  // Forget the credentials, drop anything still loading, and go back to the sign-in page
+  function requireLogin(message) {
+    credentials = null;
+    feedId++;
+    prefetched = null;
+    loading = false;
+    source.tag = null;
+    source.author = null;
+    updateTagBar();
+    errorBox.hidden = true;
+    if (!reader.hidden) closeReader();
+    feed.replaceChildren();
+    slideCount = 0; current = 0; more = false; totalElements = null; pageNumber = 0;
+    updateControls();
+    showLogin(message);
   }
 
   function nearEnd(index) {
@@ -776,6 +845,7 @@
 
   async function loadFirst() {
     errorBox.hidden = true;
+    if (!credentials) { showLogin(); return; }
     try { getBase(); }
     catch (e) {
       showError("Enter the backend base URL, for example http://localhost:8080 or https://your-backend.example.com");
@@ -806,6 +876,7 @@
       loaded = true;
     } catch (err) {
       if (id !== feedId) return;
+      if (err.status === 401) { requireLogin("Wrong email or password. Please sign in again."); return; }
       more = false; totalElements = null; pageNumber = 0;
       showMessage("Nothing loaded.");
       showError(err.message);
@@ -816,7 +887,7 @@
   }
 
   async function loadMore() {
-    if (loading || !more) return;
+    if (loading || !more || !credentials) return;
     loading = true;
     const id = feedId;
     const page = pageNumber + 1;
@@ -837,7 +908,10 @@
       updateControls();
       startPrefetch();                // line up the page after this one
     } catch (err) {
-      if (id === feedId) showError(err.message);
+      if (id === feedId) {
+        if (err.status === 401) requireLogin("Wrong email or password. Please sign in again.");
+        else showError(err.message);
+      }
     } finally {
       if (id === feedId) loading = false;
     }
@@ -845,7 +919,6 @@
   }
 
   /* ---------- events ---------- */
-  authMode.addEventListener("change", updateAuthFields);
   form.addEventListener("submit", e => {
     e.preventDefault();
     source.tag = null;          // Load posts always goes back to the full feed
@@ -853,6 +926,23 @@
     updateTagBar();
     loadFirst();
   });
+  loginForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const email = loginEmail.value.trim();
+    const password = loginPass.value;
+    if (!email || !password) { loginError.textContent = "Enter your email and password."; return; }
+    try { getBase(); }
+    catch (err) { loginError.textContent = "Enter the backend address in the field at the top first."; return; }
+    credentials = { email, password };
+    loginPass.value = "";
+    loginError.textContent = "";
+    source.tag = null;
+    source.author = null;
+    updateTagBar();
+    setLoggedIn(true);
+    loadFirst();                  // a wrong email or password comes back as a 401 and returns to this page
+  });
+  signOutBtn.addEventListener("click", () => requireLogin(""));
   tagClear.addEventListener("click", () => { source.tag = null; source.author = null; updateTagBar(); loadFirst(); });
 
   // remember the account name between visits (wrapped in try/catch: storage can be unavailable)
@@ -897,7 +987,7 @@
     feed.scrollTo({ top: current * feed.clientHeight });   // keep the current post snapped
   });
 
-  showMessage("Enter your posts URL above and press Load posts.");
+  showLogin();
 </script>
 </body>
 </html>
