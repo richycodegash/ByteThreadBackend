@@ -52,6 +52,8 @@ public record PostListsResponce(
                 .postId(post.getId())
                 .tags(tags)
                 .commentCount(count)
+                .hasLiked(hasLiked)
+                .likesCount(likesCount)
                 .imageUrl(post.getImageUrl())
                 .build();
     }
