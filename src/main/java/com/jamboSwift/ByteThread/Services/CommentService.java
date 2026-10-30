@@ -107,6 +107,9 @@ public class CommentService {
 
         Account account=client.getAccount();
 
+        Post post=comment.getPost();
+        post.setCommentsCount(post.getCommentsCount() - 1);
+
         UUID comentOwnerId=comment.getAccount().getId();
         UUID accountId=account.getId();
 
@@ -118,6 +121,7 @@ public class CommentService {
         }
 
         commentRepo.delete(comment);
+        postRepo.save(post);
 
     }
 }

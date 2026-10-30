@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -17,4 +18,6 @@ public interface LikeRepo extends JpaRepository<Like, UUID> {
     List<UUID> findLikedPostIdsByAccountAndPostIds(@Param("account") Account account, @Param("postIds") List<UUID> postIds);
 
     boolean existsByAccount(Account account);
+
+    Optional<Like> findByAccount(Account account);
 }

@@ -49,4 +49,34 @@ public class LikeService {
         likeRepo.save(like);
         postRepo.save(post);
     }
+
+    @Transactional
+    public void dislike(PostLikeRequest request){
+        String normalisedEmail=request.email().trim().toLowerCase();
+
+        Client client=clientRepo.findByEmail(normalisedEmail).orElseThrow(
+                ()-> new ClientNotFoundException("Invalid credentials")
+        );
+
+        Account account=client.getAccount();
+
+        /*if (!likeRepo.existsByAccount(account)){
+            throw new InvalidTransaction("You never liked the post");
+        }*/
+
+        Like like=likeRepo.findByAccount(account).orElseThrow(
+                ()-> new InvalidTransaction("You never liked the post")
+        );
+
+        Post post=postRepo.findById(request.postId()).orElseThrow(
+                ()->new ClientNotFoundException("Invalid post")
+        );
+
+        likeRepo.delete(like);
+        post.setLikesCount(post.getLikesCount()-1);
+
+        postRepo.save(post);
+
+
+    }
 }

@@ -5,10 +5,7 @@ import com.jamboSwift.ByteThread.Services.LikeService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/jamboSwift")
@@ -23,5 +20,14 @@ public class LikeController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body("You are all set 👍👍");
+    }
+
+    @DeleteMapping("/like")
+    public ResponseEntity<Void> dislike(@RequestBody PostLikeRequest request){
+        likeService.dislike(request);
+
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 }
