@@ -193,4 +193,18 @@ public class GlobalExceptions {
 
         return new ResponseEntity<>(errorObject,HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(InvalidTransaction.class)
+    public ResponseEntity<ErrorObject> handleInvalidTransactions(InvalidTransaction ex){
+        ErrorObject errorObject = ErrorObject.builder()
+                .errorStatus(HttpStatus.BAD_REQUEST.value())
+                .errorType("INVALID_TRANSACTION")
+                .timestamp(LocalDateTime.now())
+                .error("something went horribly wrong.Your request didn't come through,stay put as we try to fix the issue ("+ex.getMessage()+")")
+                .build();
+
+        System.out.println("\nSOMETHING WENT WRONG :-->"+ex.getMessage()+ "\n\n"+Arrays.toString(ex.getStackTrace()));
+
+        return new ResponseEntity<>(errorObject,HttpStatus.BAD_REQUEST);
+    }
 }

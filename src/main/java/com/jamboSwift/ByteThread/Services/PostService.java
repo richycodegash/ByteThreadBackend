@@ -33,6 +33,7 @@ public class PostService {
     private final AccountRepo accountRepo;
     private final CloudinaryService cloudinaryService;
     private final CommentRepo commentRepo;
+    private final LikeRepo likeRepo;
 
     @Transactional
     public PostResponce postThemShit(PostRequest request, MultipartFile file){
@@ -125,10 +126,16 @@ public class PostService {
 
     public Slice<PostListsResponce> getPost(String accountName, String category,
                                             String keyword, Pageable pageable){
-        if (!accountRepo.existsByAccountName(accountName)){
+
+        /*if (!accountRepo.existsByAccountName(userName)){
             System.out.println("\n**** client does not exist ****\n");
             throw new ClientNotFoundException("client conflict.");
-        }
+        }*/
+        String userName=accountName.trim().toLowerCase();
+
+        Account account=accountRepo.findByAccountName(userName).orElseThrow(
+                ()-> new ClientNotFoundException("client conflict.")
+        );
 
         String cleanCategory = (category == null || category.isBlank()) ? null : category.trim();
         String pattern = (keyword == null || keyword.isBlank())
@@ -138,11 +145,18 @@ public class PostService {
 
         Slice<Post> posts=postRepo.findPost(cleanCategory,pattern,pageable);
 
-        /*List<UUID> postIds = posts.getContent().stream()
+        List<UUID> postIds = posts.getContent().stream()
                 .map(Post::getId)
                 .toList();
 
-        // 2. Fetch all comment counts for these posts in a SINGLE database query
+        // 3. Fetch all post IDs that THIS user has liked in ONE single query
+        Set<UUID> likedPostIds = new HashSet<>();
+        if (account != null && !postIds.isEmpty()) {
+            List<UUID> likedIds = likeRepo.findLikedPostIdsByAccountAndPostIds(account, postIds);
+            likedPostIds.addAll(likedIds);
+        }
+
+        /*// 2. Fetch all comment counts for these posts in a SINGLE database query
         Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds, CommentType.PARENT_COMMENT)
                 .stream()
                 .collect(Collectors.toMap(
@@ -155,26 +169,40 @@ public class PostService {
             //long count = commentCountMap.getOrDefault(post.getId(), 0L);
             //post.setCommentsCount(count);
             //postRepo.save(post);
-            return PostListsResponce.fromPost(post, post.getCommentsCount());
+            boolean hasLiked = likedPostIds.contains(post.getId());
+            return PostListsResponce.fromPost(post, post.getCommentsCount(), post.getLikesCount(), hasLiked);
         });
 
         //return posts.map(PostListsResponce::fromPost);
     }
 
     public Page<PostListsResponce> getPostWithSlug(String accountName,String postTitle,Pageable pageable){
-        if (!accountRepo.existsByAccountName(accountName)){
+        /*if (!accountRepo.existsByAccountName(accountName)){
             throw new ClientNotFoundException("client conflict.");
-        }
+        }*/
+
+        String userName=accountName.trim().toLowerCase();
+
+        Account account=accountRepo.findByAccountName(userName).orElseThrow(
+                ()-> new ClientNotFoundException("client conflict.")
+        );
 
         String slug=postTitle.trim().toLowerCase();
 
         Page<Post> post=postRepo.findByTitleContainingIgnoreCase(slug,pageable);
 
-        /*List<UUID> postIds = post.getContent().stream()
+        List<UUID> postIds = post.getContent().stream()
                 .map(Post::getId)
                 .toList();
 
-        // 2. Fetch all comment counts for these posts in a SINGLE database query
+        // 3. Fetch all post IDs that THIS user has liked in ONE single query
+        Set<UUID> likedPostIds = new HashSet<>();
+        if (account != null && !postIds.isEmpty()) {
+            List<UUID> likedIds = likeRepo.findLikedPostIdsByAccountAndPostIds(account, postIds);
+            likedPostIds.addAll(likedIds);
+        }
+
+        /*// 2. Fetch all comment counts for these posts in a SINGLE database query
         Map<UUID, Long> commentCountMap = commentRepo.countCommentsByPostIds(postIds, CommentType.PARENT_COMMENT)
                 .stream()
                 .collect(Collectors.toMap(
@@ -186,15 +214,22 @@ public class PostService {
         // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
         return post.map(thePost -> {
             //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
-            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount());
+            boolean hasLiked = likedPostIds.contains(thePost.getId());
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hasLiked);
         });
 
     }
 
     public Page<PostListsResponce> getPostByUser(String accountName,Pageable pageable){
-        if (!accountRepo.existsByAccountName(accountName)){
+      /*  if (!accountRepo.existsByAccountName(accountName)){
             throw new ClientNotFoundException("client conflict.");
-        }
+        }*/
+
+        String userName=accountName.trim().toLowerCase();
+
+        Account account=accountRepo.findByAccountName(userName).orElseThrow(
+                ()-> new ClientNotFoundException("client conflict.")
+        );
 
         String accName=accountName.trim().toLowerCase();
 
@@ -212,11 +247,23 @@ public class PostService {
                         row -> (Long) row[1]
                 ));*/
 
+        List<UUID> postIds = posts.getContent().stream()
+                .map(Post::getId)
+                .toList();
+
+        // 3. Fetch all post IDs that THIS user has liked in ONE single query
+        Set<UUID> likedPostIds = new HashSet<>();
+        if (account != null && !postIds.isEmpty()) {
+            List<UUID> likedIds = likeRepo.findLikedPostIdsByAccountAndPostIds(account, postIds);
+            likedPostIds.addAll(likedIds);
+        }
+
 
         // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
         return posts.map(thePost -> {
             //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
-            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount());
+            boolean hasLiked = likedPostIds.contains(thePost.getId());
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(),hasLiked );
         });
 
     }
@@ -257,8 +304,9 @@ public class PostService {
         postRepo.save(post);
 
         Long commentCount=commentRepo.countByPostId(post.getId());
+        boolean hadLiked=likeRepo.existsByAccount(account);
 
-        return PostListsResponce.fromPost(post,commentCount);
+        return PostListsResponce.fromPost(post,commentCount, post.getLikesCount(),hadLiked);
     }
 
     public void deletePost(DeletePostRequest request){
@@ -290,9 +338,16 @@ public class PostService {
     }
 
     public Page<PostListsResponce> getPostByTag(String tagSlug,String accountName,Pageable pageable){
-        if (!accountRepo.existsByAccountName(accountName)){
+        /*if (!accountRepo.existsByAccountName(accountName)){
             throw new ClientNotFoundException("client conflict.");
-        }
+        }*/
+
+        String userName=accountName.trim().toLowerCase();
+
+        Account account=accountRepo.findByAccountName(userName).orElseThrow(
+                ()-> new ClientNotFoundException("client conflict.")
+        );
+
         Tag tag=tagsRepo.findBySlug(tagSlug).orElseThrow(
                 ()->new ClientNotFoundException("Tag does not exist.")
         );
@@ -315,7 +370,8 @@ public class PostService {
         // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
         return posts.map(thePost -> {
             //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
-            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount());
+            boolean hadLiked=likeRepo.existsByAccount(account);
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hadLiked);
         });
     }
 

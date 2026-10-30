@@ -60,8 +60,12 @@ public class CommentService {
 
         if (parentComment!=null){
             comment.setParentComment(parentComment);
+            parentComment.setReplyCount(parentComment.getReplyCount() + 1);
         }
 
+        post.setCommentsCount(post.getCommentsCount()+1);
+
+        postRepo.save(post);
         commentRepo.save(comment);
 
 
@@ -72,15 +76,15 @@ public class CommentService {
         Slice<Comment> comments=commentRepo.findByPost_IdAndCommentType(pageable,postId,CommentType.PARENT_COMMENT);
         System.out.println("**** inside get post service.");
 
-        return comments.map(
+        /*return comments.map(
                 comment -> {
                     int creply=comment.getReplies().size();
                     comment.setReplyCount(creply);
                     commentRepo.save(comment);
                     return CommentResponce.fromComment(comment);
                 }
-        );
-        //return comments.map(CommentResponce::fromComment);
+        );*/
+        return comments.map(CommentResponce::fromComment);
 
     }
 

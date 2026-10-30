@@ -34,7 +34,7 @@ public class Like {
     @ManyToOne(
             fetch = FetchType.LAZY
     )
-    @JoinColumn(name = "account_id",nullable = false)
+    @JoinColumn(name = "account_id",nullable = false,unique = true)
     private Account account;
 
     @CreationTimestamp //automatically fills the timestamp

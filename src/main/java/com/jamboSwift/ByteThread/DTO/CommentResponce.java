@@ -26,10 +26,6 @@ public record CommentResponce (
 
         LocalDateTime creationDate= TimeConverter.toLocalDateTime(comment.getCreatedAt(),"Africa/Nairobi");
 
-        int creply=comment.getReplies().size();
-        comment.setReplyCount(creply);
-
-
         /*List<CommentReplyObject> replies=comment.getReplies().stream().map(
                 coment->
 

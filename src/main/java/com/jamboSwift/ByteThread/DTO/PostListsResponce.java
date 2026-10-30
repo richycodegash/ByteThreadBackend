@@ -21,11 +21,13 @@ public record PostListsResponce(
         String authorName,
         String imageUrl,
         Long commentCount,
+        Long likesCount,
+        boolean hasLiked,
         Set<String> categoryName,
         Set<String> tags,
         LocalDateTime createdAt
 ) {
-    public static PostListsResponce fromPost(Post post,Long count){
+    public static PostListsResponce fromPost(Post post,Long count,Long likesCount,boolean hasLiked){
         Set<String> categories=new HashSet<>();
         for (Category category:post.getCategories()){
             String categoryName=category.getName();
