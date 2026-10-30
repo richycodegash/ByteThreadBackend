@@ -3,6 +3,7 @@ package com.jamboSwift.ByteThread.Models;
 import com.jamboSwift.ByteThread.Enums.CommentType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -59,5 +60,9 @@ public class Comment {
     @Column(name = "comment_type",nullable = false)
     @Enumerated(EnumType.STRING)
     private CommentType commentType;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private long replyCount = 0;
 
 }

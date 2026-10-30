@@ -3,6 +3,7 @@ package com.jamboSwift.ByteThread.DTO;
 import com.jamboSwift.ByteThread.Enums.CommentType;
 import com.jamboSwift.ByteThread.Models.Comment;
 import com.jamboSwift.ByteThread.Utilities.TimeConverter;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ public record CommentResponce (
         String profilPicUrl,
         String content,
         CommentType type,
-        int replyCount,
+        Long replyCount,
         LocalDateTime creationDate
 
 ) {
@@ -24,6 +25,10 @@ public record CommentResponce (
         System.out.println("**** inside from comment.");
 
         LocalDateTime creationDate= TimeConverter.toLocalDateTime(comment.getCreatedAt(),"Africa/Nairobi");
+
+        int creply=comment.getReplies().size();
+        comment.setReplyCount(creply);
+
 
         /*List<CommentReplyObject> replies=comment.getReplies().stream().map(
                 coment->
@@ -43,7 +48,7 @@ public record CommentResponce (
                 .content(comment.getContent())
                 .type(comment.getCommentType())
                 .creationDate(creationDate)
-                .replyCount(comment.getReplies().size())
+                .replyCount(comment.getReplyCount())
                 .build();
     }
 }

@@ -55,4 +55,17 @@ public class CommentController {
                 .status(HttpStatus.OK)
                 .body(responce);
     }
+
+    @DeleteMapping("/comment/{commentId}")
+    public ResponseEntity<Void> deleteComments(
+            @PathVariable UUID commentId,
+            @RequestParam String email
+    ){
+        commentService.deleteComment(email, commentId);
+
+        return ResponseEntity
+                .noContent()
+                .build();
+
+    }
 }

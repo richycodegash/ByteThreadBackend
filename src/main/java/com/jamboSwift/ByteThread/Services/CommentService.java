@@ -4,7 +4,9 @@ import com.jamboSwift.ByteThread.DTO.CommentReplyObject;
 import com.jamboSwift.ByteThread.DTO.CommentResponce;
 import com.jamboSwift.ByteThread.DTO.PostCommentRequest;
 import com.jamboSwift.ByteThread.Enums.CommentType;
+import com.jamboSwift.ByteThread.Enums.Roles;
 import com.jamboSwift.ByteThread.Exceptions.ClientNotFoundException;
+import com.jamboSwift.ByteThread.Exceptions.InvalidCredantials;
 import com.jamboSwift.ByteThread.Models.Account;
 import com.jamboSwift.ByteThread.Models.Client;
 import com.jamboSwift.ByteThread.Models.Comment;
@@ -70,7 +72,15 @@ public class CommentService {
         Slice<Comment> comments=commentRepo.findByPost_IdAndCommentType(pageable,postId,CommentType.PARENT_COMMENT);
         System.out.println("**** inside get post service.");
 
-        return comments.map(CommentResponce::fromComment);
+        return comments.map(
+                comment -> {
+                    int creply=comment.getReplies().size();
+                    comment.setReplyCount(creply);
+                    commentRepo.save(comment);
+                    return CommentResponce.fromComment(comment);
+                }
+        );
+        //return comments.map(CommentResponce::fromComment);
 
     }
 
@@ -78,5 +88,32 @@ public class CommentService {
         Slice<Comment> replies=commentRepo.findByParentComment_Id(pageable, commentId);
 
         return replies.map(CommentReplyObject::fromReply);
+    }
+
+    @Transactional
+    public void deleteComment(String email,UUID commentId){
+        String strippedEmail=email.trim().toLowerCase();
+        Client client =clientRepo.findByEmail(strippedEmail).orElseThrow(
+                ()->new ClientNotFoundException("Invalid credentials")
+        );
+
+        Comment comment=commentRepo.findById(commentId).orElseThrow(
+                ()->new ClientNotFoundException("Invalid comment")
+        );
+
+        Account account=client.getAccount();
+
+        UUID comentOwnerId=comment.getAccount().getId();
+        UUID accountId=account.getId();
+
+        boolean isowner=accountId.equals(comentOwnerId);
+        boolean isAdmin=client.getRole().equals(Roles.ADMIN);
+
+        if (!isowner && !isAdmin){
+            throw new InvalidCredantials("Invalid Credentials");
+        }
+
+        commentRepo.delete(comment);
+
     }
 }

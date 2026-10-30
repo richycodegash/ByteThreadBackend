@@ -56,4 +56,7 @@ public class Account {
     @OneToMany(mappedBy = "account",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Comment> commentList =new ArrayList<>();
 
+    @OneToMany(mappedBy = "account",cascade = CascadeType.ALL,orphanRemoval = true)
+    private List<Like> likesList =new ArrayList<>();
+
 }

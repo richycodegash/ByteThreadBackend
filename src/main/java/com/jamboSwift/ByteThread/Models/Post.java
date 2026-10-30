@@ -2,6 +2,7 @@ package com.jamboSwift.ByteThread.Models;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -65,6 +66,17 @@ public class Post {
     )
     private Set<Tag> tags = new HashSet<>();
 
-    @OneToMany(mappedBy = "post",cascade = CascadeType.ALL,orphanRemoval = true)
+    /*@OneToMany(mappedBy = "post",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Comment> commentList =new ArrayList<>();
+
+    @OneToMany(mappedBy = "post",cascade = CascadeType.ALL,orphanRemoval = true)
+    private List<Like> likesList =new ArrayList<>();*/
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private long likesCount = 0;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private long commentsCount = 0;
 }

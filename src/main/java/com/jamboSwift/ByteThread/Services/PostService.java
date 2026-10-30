@@ -138,7 +138,7 @@ public class PostService {
 
         Slice<Post> posts=postRepo.findPost(cleanCategory,pattern,pageable);
 
-        List<UUID> postIds = posts.getContent().stream()
+        /*List<UUID> postIds = posts.getContent().stream()
                 .map(Post::getId)
                 .toList();
 
@@ -148,12 +148,14 @@ public class PostService {
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
                         row -> (Long) row[1]
-                ));
+                ));*/
 
         // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
         return posts.map(post -> {
-            long count = commentCountMap.getOrDefault(post.getId(), 0L);
-            return PostListsResponce.fromPost(post, count);
+            //long count = commentCountMap.getOrDefault(post.getId(), 0L);
+            //post.setCommentsCount(count);
+            //postRepo.save(post);
+            return PostListsResponce.fromPost(post, post.getCommentsCount());
         });
 
         //return posts.map(PostListsResponce::fromPost);
@@ -168,7 +170,7 @@ public class PostService {
 
         Page<Post> post=postRepo.findByTitleContainingIgnoreCase(slug,pageable);
 
-        List<UUID> postIds = post.getContent().stream()
+        /*List<UUID> postIds = post.getContent().stream()
                 .map(Post::getId)
                 .toList();
 
@@ -178,13 +180,13 @@ public class PostService {
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
                         row -> (Long) row[1]
-                ));
+                ));*/
 
 
         // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
         return post.map(thePost -> {
-            long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
-            return PostListsResponce.fromPost(thePost, count);
+            //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount());
         });
 
     }
@@ -198,7 +200,7 @@ public class PostService {
 
         Page<Post> posts=postRepo.findByAccount(accName, pageable);
 
-        List<UUID> postIds = posts.getContent().stream()
+       /* List<UUID> postIds = posts.getContent().stream()
                 .map(Post::getId)
                 .toList();
 
@@ -208,13 +210,13 @@ public class PostService {
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
                         row -> (Long) row[1]
-                ));
+                ));*/
 
 
         // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
         return posts.map(thePost -> {
-            long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
-            return PostListsResponce.fromPost(thePost, count);
+            //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount());
         });
 
     }
@@ -297,7 +299,7 @@ public class PostService {
 
         Page<Post> posts=postRepo.findByTags_Slug(tag.getSlug(),pageable);
 
-        List<UUID> postIds = posts.getContent().stream()
+        /*List<UUID> postIds = posts.getContent().stream()
                 .map(Post::getId)
                 .toList();
 
@@ -307,13 +309,13 @@ public class PostService {
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
                         row -> (Long) row[1]
-                ));
+                ));*/
 
 
         // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
         return posts.map(thePost -> {
-            long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
-            return PostListsResponce.fromPost(thePost, count);
+            //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount());
         });
     }
 
