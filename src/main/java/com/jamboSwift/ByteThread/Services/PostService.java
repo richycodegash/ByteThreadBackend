@@ -304,7 +304,7 @@ public class PostService {
         postRepo.save(post);
 
         Long commentCount=commentRepo.countByPostId(post.getId());
-        boolean hadLiked=likeRepo.existsByAccount(account);
+        boolean hadLiked=likeRepo.existsByAccountAndPost(account,post);
 
         return PostListsResponce.fromPost(post,commentCount, post.getLikesCount(),hadLiked);
     }
@@ -370,7 +370,7 @@ public class PostService {
         // 3. Map posts to DTOs, safely pulling the count from the map (defaulting to 0 if none)
         return posts.map(thePost -> {
             //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
-            boolean hadLiked=likeRepo.existsByAccount(account);
+            boolean hadLiked=likeRepo.existsByAccountAndPost(account,thePost);
             return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hadLiked);
         });
     }

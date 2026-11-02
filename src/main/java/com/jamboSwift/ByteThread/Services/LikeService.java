@@ -31,13 +31,17 @@ public class LikeService {
 
         Account account=client.getAccount();
 
-        if (likeRepo.existsByAccount(account)){
-            throw new InvalidTransaction("You had already liked");
+        if (account == null) {
+            throw new InvalidTransaction("User account is not properly initialized or linked.");
         }
 
         Post post=postRepo.findById(request.postId()).orElseThrow(
                 ()->new ClientNotFoundException("Invalid post")
         );
+
+        if (likeRepo.existsByAccountAndPost(account,post)){
+            throw new InvalidTransaction("You had already liked");
+        }
 
         post.setLikesCount(post.getLikesCount() + 1);
 

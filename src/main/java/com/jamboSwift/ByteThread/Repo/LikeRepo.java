@@ -2,6 +2,7 @@ package com.jamboSwift.ByteThread.Repo;
 
 import com.jamboSwift.ByteThread.Models.Account;
 import com.jamboSwift.ByteThread.Models.Like;
+import com.jamboSwift.ByteThread.Models.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,7 +18,7 @@ public interface LikeRepo extends JpaRepository<Like, UUID> {
     @Query("SELECT l.post.id FROM Like l WHERE l.account = :account AND l.post.id IN :postIds")
     List<UUID> findLikedPostIdsByAccountAndPostIds(@Param("account") Account account, @Param("postIds") List<UUID> postIds);
 
-    boolean existsByAccount(Account account);
+    boolean existsByAccountAndPost(Account account, Post post);
 
     Optional<Like> findByAccount(Account account);
 }
