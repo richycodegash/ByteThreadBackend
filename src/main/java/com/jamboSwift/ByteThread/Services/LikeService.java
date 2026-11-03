@@ -68,16 +68,18 @@ public class LikeService {
             throw new InvalidTransaction("You never liked the post");
         }*/
 
-        Like like=likeRepo.findByAccount(account).orElseThrow(
-                ()-> new InvalidTransaction("You never liked the post")
-        );
-
         Post post=postRepo.findById(request.postId()).orElseThrow(
                 ()->new ClientNotFoundException("Invalid post")
         );
 
+        Like like=likeRepo.findByAccountAndPost(account,post).orElseThrow(
+                ()-> new InvalidTransaction("You never liked the post")
+        );
+
         likeRepo.delete(like);
-        post.setLikesCount(post.getLikesCount()-1);
+
+        if (post.getLikesCount()>0)
+            post.setLikesCount(post.getLikesCount()-1);
 
         postRepo.save(post);
 

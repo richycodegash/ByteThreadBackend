@@ -20,5 +20,5 @@ public interface LikeRepo extends JpaRepository<Like, UUID> {
 
     boolean existsByAccountAndPost(Account account, Post post);
 
-    Optional<Like> findByAccount(Account account);
+    Optional<Like> findByAccountAndPost(Account account, Post post);
 }

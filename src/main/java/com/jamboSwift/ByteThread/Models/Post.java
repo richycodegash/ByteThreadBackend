@@ -11,7 +11,14 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
-@Table(name = "post")
+@Table(
+        name = "post",
+        indexes = {
+                @Index(name = "idx_created_on",columnList = "posted_on DESC"),
+                @Index(name = "idx_account",columnList = "account_id"),
+                @Index(name = "idx_slug",columnList = "slug")
+        }
+)
 @Builder
 @Getter
 @Setter

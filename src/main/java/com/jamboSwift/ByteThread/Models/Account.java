@@ -2,6 +2,7 @@ package com.jamboSwift.ByteThread.Models;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -58,5 +59,9 @@ public class Account {
 
     @OneToMany(mappedBy = "account",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Like> likesList =new ArrayList<>();
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private long followersCountCount = 0;
 
 }
