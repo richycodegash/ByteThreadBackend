@@ -64,4 +64,8 @@ public class Account {
     @ColumnDefault("0")
     private long followersCountCount = 0;
 
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private long followingCountCount = 0;
+
 }

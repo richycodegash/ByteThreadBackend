@@ -14,6 +14,9 @@ import java.util.UUID;
         name = "follows",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"followed_account","following_account"})
+        },
+        indexes = {
+                @Index(name = "idx_follow_accounts",columnList = "followed_account,following_account")
         }
 )
 @Builder
@@ -26,11 +29,11 @@ public class Follow {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne // ✅ Changed from OneToOne to ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // ✅ Changed from OneToOne to ManyToOne
     @JoinColumn(name = "followed_account", nullable = false)
     private Account followedAccount;
 
-    @ManyToOne // ✅ Changed from OneToOne to ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // ✅ Changed from OneToOne to ManyToOne
     @JoinColumn(name = "following_account", nullable = false)
     private Account followingAccount;
 

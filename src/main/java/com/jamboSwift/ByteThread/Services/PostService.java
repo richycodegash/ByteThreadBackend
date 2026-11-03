@@ -170,7 +170,8 @@ public class PostService {
             //post.setCommentsCount(count);
             //postRepo.save(post);
             boolean hasLiked = likedPostIds.contains(post.getId());
-            return PostListsResponce.fromPost(post, post.getCommentsCount(), post.getLikesCount(), hasLiked);
+            Long followers=post.getAccount().getFollowersCountCount();
+            return PostListsResponce.fromPost(post, post.getCommentsCount(), post.getLikesCount(), hasLiked,followers);
         });
 
         //return posts.map(PostListsResponce::fromPost);
@@ -215,7 +216,8 @@ public class PostService {
         return post.map(thePost -> {
             //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
             boolean hasLiked = likedPostIds.contains(thePost.getId());
-            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hasLiked);
+            Long followers=thePost.getAccount().getFollowersCountCount();
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hasLiked,followers);
         });
 
     }
@@ -263,7 +265,8 @@ public class PostService {
         return posts.map(thePost -> {
             //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
             boolean hasLiked = likedPostIds.contains(thePost.getId());
-            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(),hasLiked );
+            Long followers=thePost.getAccount().getFollowersCountCount();
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(),hasLiked,followers );
         });
 
     }
@@ -305,8 +308,9 @@ public class PostService {
 
         Long commentCount=commentRepo.countByPostId(post.getId());
         boolean hadLiked=likeRepo.existsByAccountAndPost(account,post);
+        Long followers=post.getAccount().getFollowersCountCount();
 
-        return PostListsResponce.fromPost(post,commentCount, post.getLikesCount(),hadLiked);
+        return PostListsResponce.fromPost(post,commentCount, post.getLikesCount(),hadLiked,followers);
     }
 
     public void deletePost(DeletePostRequest request){
@@ -371,7 +375,8 @@ public class PostService {
         return posts.map(thePost -> {
             //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
             boolean hadLiked=likeRepo.existsByAccountAndPost(account,thePost);
-            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hadLiked);
+            Long followers=thePost.getAccount().getFollowersCountCount();
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hadLiked,followers);
         });
     }
 

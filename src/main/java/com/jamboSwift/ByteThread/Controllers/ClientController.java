@@ -69,6 +69,24 @@ public class ClientController {
                 .body(tags);
     }
 
+    @PostMapping("/follow")
+    public ResponseEntity<String> followAccount(@Valid @RequestBody FollowRequest followRequest){
+        clientService.followSomeone(followRequest);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body("You are all set 👍👍");
+    }
+
+    @PutMapping("/follow")
+    public ResponseEntity<String> unfollowAccount(@Valid @RequestBody FollowRequest followRequest){
+        clientService.unfollowSomeone(followRequest);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body("You are all set 👍👍");
+    }
+
 
 
 }
