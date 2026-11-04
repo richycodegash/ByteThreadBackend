@@ -87,6 +87,16 @@ public class ClientController {
                 .body("You are all set 👍👍");
     }
 
+    @GetMapping("/account")
+    public ResponseEntity<AccountDetails> getAccountDits(@RequestParam String email){
+        AccountDetails details=clientService.getAccountDetails(email);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(details);
+
+    }
+
 
 
 }

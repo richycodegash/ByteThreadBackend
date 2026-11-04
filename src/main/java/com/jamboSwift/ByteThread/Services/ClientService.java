@@ -200,4 +200,17 @@ public class ClientService {
 
     }
 
+    @Transactional
+    public AccountDetails getAccountDetails(String email){
+        String normalizedEmail=email.trim().toLowerCase();
+
+        Client client=clientRepo.findByEmail(normalizedEmail).orElseThrow(
+                ()->new ClientNotFoundException("following account does not exist")
+        );
+
+        Account account = client.getAccount();
+
+        return AccountDetails.fromAccount(account);
+    }
+
 }
