@@ -83,7 +83,7 @@ public class ClientController {
         clientService.unfollowSomeone(followRequest);
 
         return ResponseEntity
-                .status(HttpStatus.CREATED)
+                .status(HttpStatus.OK)
                 .body("You are all set 👍👍");
     }
 
