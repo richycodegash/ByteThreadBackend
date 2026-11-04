@@ -2,6 +2,7 @@ package com.jamboSwift.ByteThread.Services;
 
 import com.jamboSwift.ByteThread.DTO.*;
 import com.jamboSwift.ByteThread.Enums.CommentType;
+import com.jamboSwift.ByteThread.Enums.FollowStatus;
 import com.jamboSwift.ByteThread.Enums.Roles;
 import com.jamboSwift.ByteThread.Exceptions.ClientNotFoundException;
 import com.jamboSwift.ByteThread.Exceptions.InvalidCredantials;
@@ -34,6 +35,7 @@ public class PostService {
     private final CloudinaryService cloudinaryService;
     private final CommentRepo commentRepo;
     private final LikeRepo likeRepo;
+    private final FollowRepo followRepo;
 
     @Transactional
     public PostResponce postThemShit(PostRequest request, MultipartFile file){
@@ -171,7 +173,13 @@ public class PostService {
             //postRepo.save(post);
             boolean hasLiked = likedPostIds.contains(post.getId());
             Long followers=post.getAccount().getFollowersCountCount();
-            return PostListsResponce.fromPost(post, post.getCommentsCount(), post.getLikesCount(), hasLiked,followers);
+            boolean isFollowing=false;
+            Account followedAccount=post.getAccount();
+            if (followRepo.existsByFollowedAccountAndFollowingAccountAndStatus(followedAccount,account, FollowStatus.FOLLOWING)){
+                isFollowing=true;
+            }
+
+            return PostListsResponce.fromPost(post, post.getCommentsCount(), post.getLikesCount(), hasLiked,followers,isFollowing);
         });
 
         //return posts.map(PostListsResponce::fromPost);
@@ -217,7 +225,12 @@ public class PostService {
             //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
             boolean hasLiked = likedPostIds.contains(thePost.getId());
             Long followers=thePost.getAccount().getFollowersCountCount();
-            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hasLiked,followers);
+            boolean isFollowing=false;
+            Account followedAccount=thePost.getAccount();
+            if (followRepo.existsByFollowedAccountAndFollowingAccountAndStatus(followedAccount,account, FollowStatus.FOLLOWING)){
+                isFollowing=true;
+            }
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hasLiked,followers,isFollowing);
         });
 
     }
@@ -266,7 +279,12 @@ public class PostService {
             //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
             boolean hasLiked = likedPostIds.contains(thePost.getId());
             Long followers=thePost.getAccount().getFollowersCountCount();
-            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(),hasLiked,followers );
+            boolean isFollowing=false;
+            Account followedAccount=thePost.getAccount();
+            if (followRepo.existsByFollowedAccountAndFollowingAccountAndStatus(followedAccount,account, FollowStatus.FOLLOWING)){
+                isFollowing=true;
+            }
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(),hasLiked,followers,isFollowing );
         });
 
     }
@@ -310,7 +328,13 @@ public class PostService {
         boolean hadLiked=likeRepo.existsByAccountAndPost(account,post);
         Long followers=post.getAccount().getFollowersCountCount();
 
-        return PostListsResponce.fromPost(post,commentCount, post.getLikesCount(),hadLiked,followers);
+        boolean isFollowing=false;
+        Account followedAccount=post.getAccount();
+        if (followRepo.existsByFollowedAccountAndFollowingAccountAndStatus(followedAccount,account, FollowStatus.FOLLOWING)){
+            isFollowing=true;
+        }
+
+        return PostListsResponce.fromPost(post,commentCount, post.getLikesCount(),hadLiked,followers,isFollowing);
     }
 
     public void deletePost(DeletePostRequest request){
@@ -376,7 +400,13 @@ public class PostService {
             //long count = commentCountMap.getOrDefault(thePost.getId(), 0L);
             boolean hadLiked=likeRepo.existsByAccountAndPost(account,thePost);
             Long followers=thePost.getAccount().getFollowersCountCount();
-            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hadLiked,followers);
+            boolean isFollowing=false;
+            Account followedAccount=thePost.getAccount();
+            if (followRepo.existsByFollowedAccountAndFollowingAccountAndStatus(followedAccount,account, FollowStatus.FOLLOWING)){
+                isFollowing=true;
+            }
+
+            return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hadLiked,followers,isFollowing);
         });
     }
 

@@ -24,11 +24,12 @@ public record PostListsResponce(
         Long likesCount,
         boolean hasLiked,
         Long followers,
+        boolean isFollowing,
         Set<String> categoryName,
         Set<String> tags,
         LocalDateTime createdAt
 ) {
-    public static PostListsResponce fromPost(Post post,Long count,Long likesCount,boolean hasLiked,Long followers){
+    public static PostListsResponce fromPost(Post post,Long count,Long likesCount,boolean hasLiked,Long followers,boolean isFollowing){
         Set<String> categories=new HashSet<>();
         for (Category category:post.getCategories()){
             String categoryName=category.getName();
@@ -57,6 +58,7 @@ public record PostListsResponce(
                 .likesCount(likesCount)
                 .imageUrl(post.getImageUrl())
                 .followers(followers)
+                .isFollowing(isFollowing)
                 .build();
     }
 }
