@@ -97,6 +97,15 @@ public class ClientController {
 
     }
 
+    @PostMapping("/account-bio")
+    public ResponseEntity<String> updateBio(@Valid @RequestBody UpdateBioRequest request){
+        clientService.updateBio(request);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body("You are all set 👍👍");
+    }
+
 
 
 }

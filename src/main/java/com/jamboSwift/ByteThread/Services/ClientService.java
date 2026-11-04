@@ -205,12 +205,26 @@ public class ClientService {
         String normalizedEmail=email.trim().toLowerCase();
 
         Client client=clientRepo.findByEmail(normalizedEmail).orElseThrow(
-                ()->new ClientNotFoundException("following account does not exist")
+                ()->new ClientNotFoundException("account does not exist")
         );
 
         Account account = client.getAccount();
 
         return AccountDetails.fromAccount(account);
+    }
+
+    public void updateBio(UpdateBioRequest request){
+        String normalizedEmail= request.email().trim().toLowerCase();
+        String bio=request.bio().trim();
+
+        Client client=clientRepo.findByEmail(normalizedEmail).orElseThrow(
+                ()->new ClientNotFoundException("account does not exist")
+        );
+
+        Account account = client.getAccount();
+
+        account.setBio(bio);
+        accountRepo.save(account);
     }
 
 }
