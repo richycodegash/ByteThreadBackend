@@ -51,6 +51,10 @@ public class Account {
     @Column(name = "avata_url")
     private String avatarUrl;
 
+    @Column(name = "avata_public_url")
+    @ColumnDefault("null")
+    private String avatarPublicUrl="null";
+
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL,fetch = FetchType.LAZY,orphanRemoval = true)
     private List<Post> posts;
 

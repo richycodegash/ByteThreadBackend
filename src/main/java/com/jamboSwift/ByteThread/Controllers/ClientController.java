@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -100,6 +101,18 @@ public class ClientController {
     @PostMapping("/account-bio")
     public ResponseEntity<String> updateBio(@Valid @RequestBody UpdateBioRequest request){
         clientService.updateBio(request);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body("You are all set 👍👍");
+    }
+
+    @PostMapping("/account-profile-pic")
+    public ResponseEntity<String> updateProfilePic(
+            @RequestPart("request") UpdateProfilePicRequest request,
+            @RequestParam(value = "file",required = false) MultipartFile multipartFile
+    ){
+        clientService.updateProfilePic(multipartFile,request);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

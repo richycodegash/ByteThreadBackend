@@ -106,7 +106,9 @@ public class PostService {
             imageUrl="null";
         } else {
             // Handle the case where an image IS present
-            imageUrl=cloudinaryService.uploadFile(file);
+            Map<String, String> uploadResponse = cloudinaryService.uploadFile(file, "bytethread_uploads");
+
+            imageUrl = uploadResponse.get("secure_url");
         }
 
 

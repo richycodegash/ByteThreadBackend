@@ -15,8 +15,11 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 @AllArgsConstructor
@@ -26,6 +29,7 @@ public class ClientService {
     private final PasswordEncoder passwordEncoder;
     private final AccountRepo accountRepo;
     private final FollowRepo followRepo;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional
     public ClientRegisterResponce registerUser(ClientRegisterRequest clientRegisterRequest){
@@ -225,6 +229,41 @@ public class ClientService {
 
         account.setBio(bio);
         accountRepo.save(account);
+    }
+
+    public void updateProfilePic(MultipartFile file,UpdateProfilePicRequest request){
+        String normalizedEmail= request.email().trim().toLowerCase();
+
+        Client client=clientRepo.findByEmail(normalizedEmail).orElseThrow(
+                ()->new ClientNotFoundException("account does not exist")
+        );
+
+        Account account = client.getAccount();
+
+        if (!Objects.equals(account.getAvatarPublicUrl(), "null")){
+            cloudinaryService.deleteFileFromCloudinary(account.getAvatarPublicUrl());
+            System.out.println("========================================");
+            System.out.println("    Deleted the old profile picture     ");
+            System.out.println("========================================");
+        }
+
+        String imageUrl;
+        if (file == null || file.isEmpty()) {
+            // Handle the case where NO image was sent
+            System.out.println("No image uploaded!");
+            imageUrl="null";
+        } else {
+            // Handle the case where an image IS present
+            Map<String, String> uploadResponse = cloudinaryService.uploadFile(file, "profile_pictures_uploads");
+
+            imageUrl = uploadResponse.get("secure_url");
+            String publicId = uploadResponse.get("public_id");
+
+            account.setAvatarUrl(imageUrl);
+            account.setAvatarPublicUrl(publicId);
+            accountRepo.save(account);
+        }
+
     }
 
 }
