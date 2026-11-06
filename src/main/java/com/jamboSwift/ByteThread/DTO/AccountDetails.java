@@ -9,7 +9,8 @@ public record AccountDetails(
         String profilePic,
         String bio,
         Long followersCount,
-        Long followingCount
+        Long followingCount,
+        Long likesCount
 ) {
     public static AccountDetails fromAccount(Account account){
         return AccountDetails.builder()
@@ -18,6 +19,7 @@ public record AccountDetails(
                 .followersCount(account.getFollowersCountCount())
                 .followingCount(account.getFollowingCountCount())
                 .profilePic(account.getAvatarUrl())
+                .likesCount(account.getLikeCount())
                 .build();
     }
 }

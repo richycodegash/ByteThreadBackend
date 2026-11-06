@@ -72,4 +72,9 @@ public class Account {
     @ColumnDefault("0")
     private long followingCountCount = 0;
 
+    @Column(nullable = false,name = "like_count")
+    @ColumnDefault("0")
+    private long likeCount = 0;
+
+
 }

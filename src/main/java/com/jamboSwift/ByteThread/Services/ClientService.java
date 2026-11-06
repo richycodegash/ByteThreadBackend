@@ -217,6 +217,7 @@ public class ClientService {
         return AccountDetails.fromAccount(account);
     }
 
+    @Transactional
     public void updateBio(UpdateBioRequest request){
         String normalizedEmail= request.email().trim().toLowerCase();
         String bio=request.bio().trim();
@@ -231,6 +232,7 @@ public class ClientService {
         accountRepo.save(account);
     }
 
+    @Transactional
     public void updateProfilePic(MultipartFile file,UpdateProfilePicRequest request){
         String normalizedEmail= request.email().trim().toLowerCase();
 
@@ -243,7 +245,7 @@ public class ClientService {
         if (!Objects.equals(account.getAvatarPublicUrl(), "null")){
             cloudinaryService.deleteFileFromCloudinary(account.getAvatarPublicUrl());
             System.out.println("========================================");
-            System.out.println("    Deleted the old profile picture     ");
+            System.out.println("    Deleted the old profile picture for "+account.getAccountName()+"    ");
             System.out.println("========================================");
         }
 

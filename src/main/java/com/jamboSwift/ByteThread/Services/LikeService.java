@@ -7,6 +7,7 @@ import com.jamboSwift.ByteThread.Models.Account;
 import com.jamboSwift.ByteThread.Models.Client;
 import com.jamboSwift.ByteThread.Models.Like;
 import com.jamboSwift.ByteThread.Models.Post;
+import com.jamboSwift.ByteThread.Repo.AccountRepo;
 import com.jamboSwift.ByteThread.Repo.ClientRepo;
 import com.jamboSwift.ByteThread.Repo.LikeRepo;
 import com.jamboSwift.ByteThread.Repo.PostRepo;
@@ -20,6 +21,7 @@ public class LikeService {
     private final LikeRepo likeRepo;
     private final ClientRepo clientRepo;
     private final PostRepo postRepo;
+    private final AccountRepo accountRepo;
 
     @Transactional
     public void PostLike(PostLikeRequest request){
@@ -44,6 +46,7 @@ public class LikeService {
         }
 
         post.setLikesCount(post.getLikesCount() + 1);
+        account.setLikeCount(account.getLikeCount() + 1);
 
         Like like=Like.builder()
                 .account(account)
@@ -52,6 +55,7 @@ public class LikeService {
 
         likeRepo.save(like);
         postRepo.save(post);
+        accountRepo.save(account);
     }
 
     @Transactional
@@ -73,15 +77,17 @@ public class LikeService {
         );
 
         Like like=likeRepo.findByAccountAndPost(account,post).orElseThrow(
-                ()-> new InvalidTransaction("You never liked the post")
+                ()-> new InvalidTransaction("You disliked / never liked the post")
         );
 
         likeRepo.delete(like);
 
         if (post.getLikesCount()>0)
             post.setLikesCount(post.getLikesCount()-1);
+        account.setLikeCount(Math.max(0,account.getLikeCount() - 1));
 
         postRepo.save(post);
+        accountRepo.save(account);
 
 
     }
