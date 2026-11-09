@@ -24,6 +24,9 @@ spring:
         format_sql: false
         # dialect: org.hibernate.dialect.PostgreSQLDialect (Hibernate 6+ auto-detects this cleanly, but can be kept if preferred)
 
+  main:
+    lazy-initialization: true
+
 cloudinary:
   cloud_name: ${CLOUDINARY_CLOUD_NAME}
   api_key: ${CLOUDINARY_API_KEY}

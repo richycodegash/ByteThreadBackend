@@ -45,11 +45,14 @@
 
   /* ---------- top bar ---------- */
   header {
+    position: relative;
+    z-index: 10;
     flex: 0 0 auto;
     background: var(--surface);
     border-bottom: 1px solid var(--line);
     padding: 10px 16px;
   }
+  .menu-toggle { display: none; }   /* only shown on phones, see the media query below */
   form, .auth { display: flex; gap: 8px; max-width: 900px; margin: 0 auto; }
   .auth { margin-top: 8px; flex-wrap: wrap; }
   .auth input { min-width: 150px; }
@@ -208,6 +211,35 @@
   @media (max-width: 560px) {
     main { padding: 8px; }
     .phone { flex: 1 1 auto; border-radius: 12px; }
+    header { padding: 4px 12px; }
+    .menu-toggle {                       /* phones: the top fields collapse behind this button */
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      padding: 8px 2px;
+      font: inherit;
+      font-weight: 600;
+      color: var(--text);
+      background: none;
+      border: 0;
+      cursor: pointer;
+    }
+    .menu-toggle svg { width: 18px; height: 18px; transition: transform 0.15s; }
+    header.open .menu-toggle svg { transform: rotate(180deg); }
+    #headerPanel {                       /* drops down over the feed, so the feed is never resized */
+      display: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;
+      padding: 10px 12px 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+    }
+    header.open #headerPanel { display: block; }
     .nav { display: none; }              /* phones: swipe up and down instead of using the buttons */
     #controls {                          /* only the small "3 / 10" counter stays, on top of the card */
       position: absolute;
@@ -369,6 +401,11 @@
 <body>
 
 <header>
+  <button type="button" class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="headerPanel">
+    <span>Menu</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l7 7 7-7"/></svg>
+  </button>
+  <div id="headerPanel">
   <form id="form">
     <input type="text" id="url" aria-label="Backend base URL" list="recentBases"
            value="http://localhost:8080"
@@ -382,6 +419,7 @@
       <span id="sessionLabel"></span>
       <button type="button" class="link-btn" id="signOut">Sign out</button>
     </div>
+  </div>
   </div>
 </header>
 
@@ -443,6 +481,8 @@
   const sessionBox = document.getElementById("session");
   const sessionLabel = document.getElementById("sessionLabel");
   const signOutBtn = document.getElementById("signOut");
+  const headerEl = document.querySelector("header");
+  const menuToggle = document.getElementById("menuToggle");
   let credentials = null;     // { email, password }, kept only in memory: gone on refresh or sign out
   const errorBox = document.getElementById("error");
   const feed = document.getElementById("feed");
@@ -644,6 +684,7 @@
     if (!accountInput.value.trim()) {
       if (!reader.hidden) closeReader();
       showError("Enter your account name in the field at the top, then press the tag again.");
+      setMenuOpen(true);
       accountInput.focus();
       return;
     }
@@ -803,7 +844,14 @@
   }
 
   /* ---------- sign in / sign out ---------- */
+  // On phones the top fields live in a drop-down menu; on wider screens the "open" class changes nothing.
+  function setMenuOpen(open) {
+    headerEl.classList.toggle("open", open);
+    menuToggle.setAttribute("aria-expanded", String(open));
+  }
+
   function setLoggedIn(on) {
+    setMenuOpen(!on);             // signed out: menu open so the address can be set; signed in: tucked away
     loginBox.hidden = on;
     phoneBox.hidden = !on;
     controlsBox.hidden = !on;
@@ -855,6 +903,7 @@
     if (!credentials) { showLogin(); return; }
     try { getBase(); }
     catch (e) {
+      setMenuOpen(true);
       showError("Enter the backend base URL, for example http://localhost:8080 or https://your-backend.example.com");
       return;
     }
@@ -928,6 +977,7 @@
   /* ---------- events ---------- */
   form.addEventListener("submit", e => {
     e.preventDefault();
+    setMenuOpen(false);         // phones: fold the menu away once Load posts is pressed
     source.tag = null;          // Load posts always goes back to the full feed
     source.author = null;
     updateTagBar();
@@ -939,7 +989,7 @@
     const password = loginPass.value;
     if (!email || !password) { loginError.textContent = "Enter your email and password."; return; }
     try { getBase(); }
-    catch (err) { loginError.textContent = "Enter the backend address in the field at the top first."; return; }
+    catch (err) { setMenuOpen(true); loginError.textContent = "Enter the backend address in the field at the top first."; return; }
     credentials = { email, password };
     loginPass.value = "";
     loginError.textContent = "";
@@ -950,6 +1000,7 @@
     loadFirst();                  // a wrong email or password comes back as a 401 and returns to this page
   });
   signOutBtn.addEventListener("click", () => requireLogin(""));
+  menuToggle.addEventListener("click", () => setMenuOpen(!headerEl.classList.contains("open")));
   tagClear.addEventListener("click", () => { source.tag = null; source.author = null; updateTagBar(); loadFirst(); });
 
   // remember the account name between visits (wrapped in try/catch: storage can be unavailable)
