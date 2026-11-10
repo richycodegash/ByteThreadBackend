@@ -6,6 +6,10 @@ import com.jamboSwift.ByteThread.Services.ClientService;
 import com.jamboSwift.ByteThread.Services.TagsService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -117,6 +121,18 @@ public class ClientController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body("You are all set 👍👍");
+    }
+
+    @GetMapping("/notification")
+    public ResponseEntity<Slice<NotificationResponce>> getNotifications(
+            @RequestParam String email,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC,size = 20) Pageable pageable
+    ){
+        Slice<NotificationResponce> notificationResponces=clientService.getNotifications(email, pageable);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(notificationResponces);
     }
 
 

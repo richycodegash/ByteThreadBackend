@@ -3,15 +3,20 @@ package com.jamboSwift.ByteThread.Services;
 import com.jamboSwift.ByteThread.DTO.*;
 import com.jamboSwift.ByteThread.Enums.ClientStatus;
 import com.jamboSwift.ByteThread.Enums.FollowStatus;
+import com.jamboSwift.ByteThread.Enums.NotificationStatus;
 import com.jamboSwift.ByteThread.Enums.Roles;
 import com.jamboSwift.ByteThread.Exceptions.*;
 import com.jamboSwift.ByteThread.Models.Account;
 import com.jamboSwift.ByteThread.Models.Client;
 import com.jamboSwift.ByteThread.Models.Follow;
+import com.jamboSwift.ByteThread.Models.Notification;
 import com.jamboSwift.ByteThread.Repo.AccountRepo;
 import com.jamboSwift.ByteThread.Repo.ClientRepo;
 import com.jamboSwift.ByteThread.Repo.FollowRepo;
+import com.jamboSwift.ByteThread.Repo.NotificationRepo;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +35,7 @@ public class ClientService {
     private final AccountRepo accountRepo;
     private final FollowRepo followRepo;
     private final CloudinaryService cloudinaryService;
+    private final NotificationRepo notificationRepo;
 
     @Transactional
     public ClientRegisterResponce registerUser(ClientRegisterRequest clientRegisterRequest){
@@ -265,6 +271,26 @@ public class ClientService {
             account.setAvatarPublicUrl(publicId);
             accountRepo.save(account);
         }
+
+    }
+
+    @Transactional
+    public Slice<NotificationResponce> getNotifications(String email, Pageable pageable){
+        String normalizedEmail= email.trim().toLowerCase();
+
+        Client client=clientRepo.findByEmail(normalizedEmail).orElseThrow(
+                ()->new ClientNotFoundException("account does not exist")
+        );
+
+        Account account = client.getAccount();
+
+        Slice<Notification> notifications=notificationRepo.findByAccountAndStatus(account, NotificationStatus.UNREAD,pageable);
+
+        return notifications.map(notification -> {
+            notification.setStatus(NotificationStatus.READ);
+            notificationRepo.save(notification);
+            return NotificationResponce.fromNotification(notification);
+        });
 
     }
 

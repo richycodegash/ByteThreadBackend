@@ -6,6 +6,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -36,6 +38,9 @@ public class Like {
     )
     @JoinColumn(name = "account_id",nullable = false,unique = true)
     private Account account;
+
+    @OneToMany(mappedBy = "likes", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Notification> notifications = new ArrayList<>();
 
     @CreationTimestamp //automatically fills the timestamp
     @Column(name = "posted_on", nullable = false, updatable = false)

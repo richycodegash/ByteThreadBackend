@@ -15,7 +15,9 @@ import java.util.UUID;
         name = "notifications",
         indexes = {
                 @Index(name = "idx_status",columnList = "notification_status"),
-                @Index(name = "idx_subject",columnList = "notification_subject")
+                @Index(name = "idx_subject",columnList = "notification_subject"),
+                @Index(name = "idx_notification_account",columnList = "account"),
+                @Index(name = "idx_createdAt",columnList = "created_at")
         }
 )
 @Builder
@@ -28,20 +30,28 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account",nullable = false)
     private Account account;
 
-    @Column
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "actor_account_id")
+    private Account actor; // The user who triggered the notification (e.g., liked/commented)
+
+    @Column(nullable = false)
     private String message;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "notification_status",nullable = false)
     private NotificationStatus status;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post")
     private Post post;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "likes")
+    private Like likes;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "notification_subject",nullable = false)

@@ -1,9 +1,7 @@
 package com.jamboSwift.ByteThread.Services;
 
 import com.jamboSwift.ByteThread.DTO.*;
-import com.jamboSwift.ByteThread.Enums.CommentType;
-import com.jamboSwift.ByteThread.Enums.FollowStatus;
-import com.jamboSwift.ByteThread.Enums.Roles;
+import com.jamboSwift.ByteThread.Enums.*;
 import com.jamboSwift.ByteThread.Exceptions.ClientNotFoundException;
 import com.jamboSwift.ByteThread.Exceptions.InvalidCredantials;
 import com.jamboSwift.ByteThread.Exceptions.UnfoundCategory;
@@ -36,6 +34,7 @@ public class PostService {
     private final CommentRepo commentRepo;
     private final LikeRepo likeRepo;
     private final FollowRepo followRepo;
+    private final NotificationRepo notificationRepo;
 
     @Transactional
     public PostResponce postThemShit(PostRequest request, MultipartFile file){
@@ -123,7 +122,29 @@ public class PostService {
                 .imageUrl(imageUrl)
                 .build();
 
-        postRepo.save(post);
+        Post savedPost=postRepo.save(post);
+
+        Optional<List<Follow>> allAccountsFollowingMe=followRepo.findByFollowedAccount(account);
+
+        allAccountsFollowingMe.get().forEach(
+                follow -> {
+                    Account followingAccount=follow.getFollowingAccount();
+                    Account followedAccount=follow.getFollowedAccount();
+                    System.out.println("\n***account name is : "+account.getAccountName()+",followed account name is "+followedAccount.getAccountName());
+                    if (account.equals(follow.getFollowedAccount())){
+                        Notification notification =Notification.builder()
+                                .account(followingAccount)
+                                .actor(account)
+                                .message(client.getFirstName()+" "+client.getSecondName()+"("+account.getAccountName()+")"+" have posted a new thread.click to view.")
+                                .post(savedPost)
+                                .subject(NotificationSubject.NEW_POST)
+                                .status(NotificationStatus.UNREAD)
+                                .build();
+
+                        notificationRepo.save(notification);
+                    }
+                }
+        );
 
         return PostResponce.fromSlug(theSlug);
     }

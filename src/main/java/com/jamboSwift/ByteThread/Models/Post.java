@@ -73,11 +73,14 @@ public class Post {
     )
     private Set<Tag> tags = new HashSet<>();
 
-    /*@OneToMany(mappedBy = "post",cascade = CascadeType.ALL,orphanRemoval = true)
+    @OneToMany(mappedBy = "post",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Comment> commentList =new ArrayList<>();
 
     @OneToMany(mappedBy = "post",cascade = CascadeType.ALL,orphanRemoval = true)
-    private List<Like> likesList =new ArrayList<>();*/
+    private List<Like> likesList =new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Notification> notifications = new ArrayList<>();
 
     @Column(nullable = false)
     @ColumnDefault("0")

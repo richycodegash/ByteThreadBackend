@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestValueException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -201,6 +202,20 @@ public class GlobalExceptions {
                 .errorType("INVALID_TRANSACTION")
                 .timestamp(LocalDateTime.now())
                 .error("something went horribly wrong.Your request didn't come through,stay put as we try to fix the issue ("+ex.getMessage()+")")
+                .build();
+
+        System.out.println("\nSOMETHING WENT WRONG :-->"+ex.getMessage()+ "\n\n"+Arrays.toString(ex.getStackTrace()));
+
+        return new ResponseEntity<>(errorObject,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorObject> urlMissmatch(NoResourceFoundException ex){
+        ErrorObject errorObject = ErrorObject.builder()
+                .errorStatus(HttpStatus.BAD_REQUEST.value())
+                .errorType("RESOURCE_NOT_FOUND")
+                .timestamp(LocalDateTime.now())
+                .error("something went horribly wrong.Your request didn't come through,stay put as we try to fix the issue.(THE URL MIGHT BE INCORRECT.PLEASE TRY AGAIN)")
                 .build();
 
         System.out.println("\nSOMETHING WENT WRONG :-->"+ex.getMessage()+ "\n\n"+Arrays.toString(ex.getStackTrace()));
