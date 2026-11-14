@@ -433,4 +433,26 @@ public class PostService {
         });
     }
 
+    public PostListsResponce getPostById(UUID postId,String accountName){
+        String userName=accountName.trim().toLowerCase();
+
+        Account account=accountRepo.findByAccountName(userName).orElseThrow(
+                ()-> new ClientNotFoundException("client conflict.")
+        );
+
+        Post thePost=postRepo.getReferenceById(postId);
+
+        boolean hadLiked=likeRepo.existsByAccountAndPost(account,thePost);
+        Long followers=thePost.getAccount().getFollowersCountCount();
+        boolean isFollowing=false;
+        Account followedAccount=thePost.getAccount();
+        if (followRepo.existsByFollowedAccountAndFollowingAccountAndStatus(followedAccount,account, FollowStatus.FOLLOWING)){
+            isFollowing=true;
+        }
+
+        return PostListsResponce.fromPost(thePost, thePost.getCommentsCount(), thePost.getLikesCount(), hadLiked,followers,isFollowing);
+
+
+    }
+
 }

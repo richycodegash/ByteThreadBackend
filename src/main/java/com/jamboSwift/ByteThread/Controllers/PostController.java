@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.UUID;
+
 @RestController
 @AllArgsConstructor
 @RequestMapping("api/jamboSwift")
@@ -106,5 +108,14 @@ public class PostController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(responces);
+    }
+
+    @GetMapping("/thePost")
+    public ResponseEntity<PostListsResponce> getPostById(@RequestParam UUID postId, @RequestParam String accountName){
+        PostListsResponce responce=postService.getPostById(postId, accountName);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(responce);
     }
 }
