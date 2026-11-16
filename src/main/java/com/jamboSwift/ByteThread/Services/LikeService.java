@@ -7,10 +7,13 @@ import com.jamboSwift.ByteThread.Exceptions.ClientNotFoundException;
 import com.jamboSwift.ByteThread.Exceptions.InvalidTransaction;
 import com.jamboSwift.ByteThread.Models.*;
 import com.jamboSwift.ByteThread.Repo.*;
+import com.jamboSwift.ByteThread.Utilities.LikeCreatedEvent;
 import lombok.AllArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,7 +25,9 @@ public class LikeService {
     private final PostRepo postRepo;
     private final AccountRepo accountRepo;
     private final FollowRepo followRepo;
-    private final NotificationRepo notificationRepo;
+    //private final NotificationRepo notificationRepo;
+    //private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void PostLike(PostLikeRequest request){
@@ -58,6 +63,8 @@ public class LikeService {
         postRepo.save(post);
         accountRepo.save(account);
 
+        /*
+        this was the initial thought....but it cost N+1 query problem
         Optional<List<Follow>> allAccountsFollowingMe=followRepo.findByFollowedAccount(account);
         System.out.println("Follow count : "+ (long) allAccountsFollowingMe.get().size());
         allAccountsFollowingMe.get().forEach(
@@ -78,7 +85,10 @@ public class LikeService {
                         notificationRepo.save(notification);
                     }
                 }
-        );
+        );*/
+
+        //notificationService.createNewLikeNotification(account,client,savedLike,post);
+        eventPublisher.publishEvent(new LikeCreatedEvent(post,client,account,savedLike));
 
     }
 

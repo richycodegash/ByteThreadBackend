@@ -8,7 +8,9 @@ import com.jamboSwift.ByteThread.Exceptions.UnfoundCategory;
 import com.jamboSwift.ByteThread.Models.*;
 import com.jamboSwift.ByteThread.Repo.*;
 import com.jamboSwift.ByteThread.Utilities.HelperClass;
+import com.jamboSwift.ByteThread.Utilities.PostCreatedEvent;
 import lombok.AllArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -34,7 +36,9 @@ public class PostService {
     private final CommentRepo commentRepo;
     private final LikeRepo likeRepo;
     private final FollowRepo followRepo;
-    private final NotificationRepo notificationRepo;
+    //private final NotificationRepo notificationRepo;
+    //private  final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PostResponce postThemShit(PostRequest request, MultipartFile file){
@@ -124,6 +128,8 @@ public class PostService {
 
         Post savedPost=postRepo.save(post);
 
+        /*
+        this was the initial thought....but it cost N+1 query problem
         Optional<List<Follow>> allAccountsFollowingMe=followRepo.findByFollowedAccount(account);
 
         allAccountsFollowingMe.get().forEach(
@@ -144,7 +150,13 @@ public class PostService {
                         notificationRepo.save(notification);
                     }
                 }
-        );
+        );*/
+
+        // Trigger notifications asynchronously (runs in the background, doesn't block response)
+        //notificationService.sendNewPostNotifications(account, client, savedPost);
+
+        // 🚀 Publish the event here. This triggers ONLY after the transaction commits successfully.
+        eventPublisher.publishEvent(new PostCreatedEvent(savedPost, client, account));
 
         return PostResponce.fromSlug(theSlug);
     }

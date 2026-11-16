@@ -3,6 +3,8 @@ package com.jamboSwift.ByteThread.Repo;
 import com.jamboSwift.ByteThread.Enums.FollowStatus;
 import com.jamboSwift.ByteThread.Models.Account;
 import com.jamboSwift.ByteThread.Models.Follow;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,5 +16,5 @@ public interface FollowRepo extends JpaRepository<Follow, UUID> {
 
     Optional<Follow> findByFollowedAccountAndFollowingAccount(Account followedAccount, Account followingAccount);
 
-    Optional<List<Follow>> findByFollowedAccount(Account account);
+    Slice<Follow> findByFollowedAccount(Account account, Pageable pageable);
 }
