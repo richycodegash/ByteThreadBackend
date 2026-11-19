@@ -76,5 +76,9 @@ public class Account {
     @ColumnDefault("0")
     private long likeCount = 0;
 
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private long accountCreationCount = 0;
+
 
 }

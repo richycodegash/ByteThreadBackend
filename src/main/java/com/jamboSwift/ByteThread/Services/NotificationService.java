@@ -102,6 +102,8 @@ public class NotificationService {
             hasMore = followerSlice.hasNext();
             page++;
             notificationCounter++;
+
+            System.out.println("Processing chunk page: " + page + ", fetched " + followers.size() + " followers.");
         }
         System.out.println("\n*** Successfully saved " + notificationCounter + " notifications asynchronously! (for new post)***\n");
     }

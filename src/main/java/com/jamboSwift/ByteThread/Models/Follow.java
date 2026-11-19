@@ -31,11 +31,11 @@ public class Follow {
 
     @ManyToOne(fetch = FetchType.LAZY) // ✅ Changed from OneToOne to ManyToOne
     @JoinColumn(name = "followed_account", nullable = false)
-    private Account followedAccount;
+    private Account followedAccount; //the ones who are following you.
 
     @ManyToOne(fetch = FetchType.LAZY) // ✅ Changed from OneToOne to ManyToOne
     @JoinColumn(name = "following_account", nullable = false)
-    private Account followingAccount;
+    private Account followingAccount; //the ones you are following.
 
     @CreationTimestamp //automatically fills the timestamp
     @Column(name = "followed_on", nullable = false, updatable = false)

@@ -3,6 +3,7 @@ package com.jamboSwift.ByteThread.Controllers;
 import com.jamboSwift.ByteThread.DTO.*;
 import com.jamboSwift.ByteThread.Services.CategoriesService;
 import com.jamboSwift.ByteThread.Services.ClientService;
+import com.jamboSwift.ByteThread.Services.ShareService;
 import com.jamboSwift.ByteThread.Services.TagsService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -21,9 +22,10 @@ import java.util.List;
 @RequestMapping("api/jamboSwift")
 @AllArgsConstructor
 public class ClientController {
-    private ClientService clientService;
-    private CategoriesService categoriesService;
-    private TagsService tagsService;
+    private final ClientService clientService;
+    private final CategoriesService categoriesService;
+    private final TagsService tagsService;
+    private final ShareService shareService;
 
     @PostMapping("/account-name")
     public ResponseEntity<AccountChangeResponce> changeAccountName(@Valid @RequestBody ChangeAccountNameRequest request){
@@ -133,6 +135,29 @@ public class ClientController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(notificationResponces);
+    }
+
+    @PostMapping("/share")
+    public ResponseEntity<String> shareAPost(@Valid @RequestBody ShareRequest request){
+        shareService.shareThePost(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body("You are all set 👍👍");
+    }
+
+    @GetMapping("/followers")
+    public ResponseEntity<Slice<AccountsFollowingMeResponce>> getFollowers(
+            @PageableDefault(sort = "followedOn", direction = Sort.Direction.DESC,size = 20) Pageable pageable,
+            @RequestParam String accountName
+    ){
+        Slice<AccountsFollowingMeResponce> responces=clientService.findAccountsFollowing(accountName, pageable);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(responces);
+
+
     }
 
 

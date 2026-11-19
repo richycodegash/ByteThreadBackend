@@ -4,6 +4,7 @@ import com.jamboSwift.ByteThread.Enums.ClientStatus;
 import com.jamboSwift.ByteThread.Enums.Roles;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -56,7 +57,6 @@ public class Client {
 
     @OneToOne(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private Account account;
-
 
 
 }

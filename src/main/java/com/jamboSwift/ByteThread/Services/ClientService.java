@@ -43,7 +43,31 @@ public class ClientService {
         boolean wasUserRegistered=clientRepo.existsByEmail(normalizedEmail);
 
         if (wasUserRegistered){
-            throw new ClientAlreadyRegistered("An account with this email address already exists");
+            Client client =clientRepo.findByEmail(normalizedEmail).orElseThrow(
+                    ()-> new ClientNotFoundException("Account creation failed.Try again.")
+            );
+
+
+            String hashedPassword= passwordEncoder.encode(clientRegisterRequest.password());
+            client.setFirstName(clientRegisterRequest.firstName());
+            client.setPhoneNumber(clientRegisterRequest.phoneNumber());
+            client.setSecondName(clientRegisterRequest.secondName());
+            client.setPassword(hashedPassword);
+
+            Account account = client.getAccount();
+            String accountName= randomGeneratorHelper.generateAccountName(clientRegisterRequest.firstName(),clientRegisterRequest.secondName());
+            account.setAccountName(accountName);
+            account.setAccountCreationCount(Math.max(0,account.getAccountCreationCount()+1));
+
+            if (account.getAccountCreationCount()-1>2){
+                throw new ClientAlreadyRegistered("You have tried many times.This email is locked at the moment.Try again with another email.");
+            }
+
+            Client clientSaved=clientRepo.save(client);
+            accountRepo.save(account);
+            System.out.println("\n**** account with this email was created ****");
+            return ClientRegisterResponce.fromClient(clientSaved);
+            //throw new ClientAlreadyRegistered("An account with this email address already exists");
         }
 
         String accountName= randomGeneratorHelper.generateAccountName(clientRegisterRequest.firstName(),clientRegisterRequest.secondName());
@@ -63,6 +87,7 @@ public class ClientService {
                 .bio("null")
                 .accountName(accountName)
                 .avatarUrl("null")
+                .accountCreationCount(1)
                 .build();
 
         ourClient.setAccount(account);
@@ -292,6 +317,21 @@ public class ClientService {
             return NotificationResponce.fromNotification(notification);
         });
 
+    }
+
+    @Transactional
+    public Slice<AccountsFollowingMeResponce> findAccountsFollowing(String accountName,Pageable pageable){
+
+        Account account=accountRepo.findByAccountName(accountName.toLowerCase().trim()).orElseThrow(
+                ()-> new ClientNotFoundException("Account does not exist.")
+        );
+
+        Slice<Follow> followerSlice = followRepo.findByFollowedAccount(account, pageable);
+
+        return followerSlice.map(follow -> {
+            Account followedAccount=follow.getFollowingAccount();
+            return AccountsFollowingMeResponce.fromAccount(followedAccount);
+        });
     }
 
 }
