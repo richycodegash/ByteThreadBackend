@@ -13,6 +13,9 @@ public record ShareRequest(
         String receiverAccount,
 
         @NotNull(message = "post is required")
-        UUID postId
+        UUID postId,
+
+        @NotBlank(message = "zone id is required")
+        String zoneId
 ) {
 }

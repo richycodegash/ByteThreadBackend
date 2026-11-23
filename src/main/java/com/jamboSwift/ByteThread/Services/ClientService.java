@@ -1,19 +1,10 @@
 package com.jamboSwift.ByteThread.Services;
 
 import com.jamboSwift.ByteThread.DTO.*;
-import com.jamboSwift.ByteThread.Enums.ClientStatus;
-import com.jamboSwift.ByteThread.Enums.FollowStatus;
-import com.jamboSwift.ByteThread.Enums.NotificationStatus;
-import com.jamboSwift.ByteThread.Enums.Roles;
+import com.jamboSwift.ByteThread.Enums.*;
 import com.jamboSwift.ByteThread.Exceptions.*;
-import com.jamboSwift.ByteThread.Models.Account;
-import com.jamboSwift.ByteThread.Models.Client;
-import com.jamboSwift.ByteThread.Models.Follow;
-import com.jamboSwift.ByteThread.Models.Notification;
-import com.jamboSwift.ByteThread.Repo.AccountRepo;
-import com.jamboSwift.ByteThread.Repo.ClientRepo;
-import com.jamboSwift.ByteThread.Repo.FollowRepo;
-import com.jamboSwift.ByteThread.Repo.NotificationRepo;
+import com.jamboSwift.ByteThread.Models.*;
+import com.jamboSwift.ByteThread.Repo.*;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -25,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -36,6 +28,7 @@ public class ClientService {
     private final FollowRepo followRepo;
     private final CloudinaryService cloudinaryService;
     private final NotificationRepo notificationRepo;
+    private final ShareRepo shareRepo;
 
     @Transactional
     public ClientRegisterResponce registerUser(ClientRegisterRequest clientRegisterRequest){
@@ -312,6 +305,14 @@ public class ClientService {
         Slice<Notification> notifications=notificationRepo.findByAccountAndStatus(account, NotificationStatus.UNREAD,pageable);
 
         return notifications.map(notification -> {
+            if (notification.getSubject().equals(NotificationSubject.POST_SHARED)){
+                Optional<ShareInstance> shareInstance= Optional.ofNullable(notification.getShareInstance());
+                if (shareInstance.isPresent()){
+                    ShareInstance share=shareInstance.get();
+                    share.setShareStatus(SharingStatus.RECEIVED);
+                    shareRepo.save(share);
+                }
+            }
             notification.setStatus(NotificationStatus.READ);
             notificationRepo.save(notification);
             return NotificationResponce.fromNotification(notification);

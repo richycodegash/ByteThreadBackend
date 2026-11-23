@@ -17,7 +17,8 @@ import java.util.UUID;
                 @Index(name = "idx_status",columnList = "notification_status"),
                 @Index(name = "idx_subject",columnList = "notification_subject"),
                 @Index(name = "idx_notification_account",columnList = "account"),
-                @Index(name = "idx_createdAt",columnList = "created_at")
+                @Index(name = "idx_createdAt",columnList = "created_at"),
+                @Index(name = "idx_share",columnList = "share")
         }
 )
 @Builder
@@ -37,6 +38,10 @@ public class Notification {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "actor_account_id")
     private Account actor; // The user who triggered the notification (e.g., liked/commented)
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "share")
+    private ShareInstance shareInstance;
 
     @Column(nullable = false)
     private String message;

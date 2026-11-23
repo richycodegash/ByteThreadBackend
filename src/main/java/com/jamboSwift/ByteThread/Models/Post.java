@@ -89,4 +89,8 @@ public class Post {
     @Column(nullable = false)
     @ColumnDefault("0")
     private long commentsCount = 0;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private long sharesCount = 0;
 }

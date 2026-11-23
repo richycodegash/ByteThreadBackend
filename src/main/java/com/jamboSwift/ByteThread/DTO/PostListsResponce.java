@@ -25,6 +25,7 @@ public record PostListsResponce(
         boolean hasLiked,
         Long followers,
         boolean isFollowing,
+        Long sharesCount,
         Set<String> categoryName,
         Set<String> tags,
         LocalDateTime createdAt
@@ -59,6 +60,7 @@ public record PostListsResponce(
                 .imageUrl(post.getImageUrl())
                 .followers(followers)
                 .isFollowing(isFollowing)
+                .sharesCount(post.getSharesCount())
                 .build();
     }
 }

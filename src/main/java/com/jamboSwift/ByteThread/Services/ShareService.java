@@ -13,11 +13,14 @@ import com.jamboSwift.ByteThread.Repo.AccountRepo;
 import com.jamboSwift.ByteThread.Repo.NotificationRepo;
 import com.jamboSwift.ByteThread.Repo.PostRepo;
 import com.jamboSwift.ByteThread.Repo.ShareRepo;
+import com.jamboSwift.ByteThread.Utilities.TimeConverter;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -32,6 +35,7 @@ public class ShareService {
     public void shareThePost(ShareRequest request){
         String senderAccountName= request.senderAccount();
         String receiverAccountName= request.receiverAccount();
+        String zone =request.zoneId().trim();
 
         Account sender=accountRepo.findByAccountName(senderAccountName).orElseThrow(
                 ()-> new ClientNotFoundException("client conflict (your account name is invalid).")
@@ -42,6 +46,7 @@ public class ShareService {
         );
 
         Post post=postRepo.getReferenceById(request.postId());
+        post.setSharesCount(Math.max(0, post.getSharesCount() + 1));
 
         ShareInstance shareInstance = ShareInstance.builder()
                 .post(post)
@@ -52,6 +57,11 @@ public class ShareService {
 
         shareRepo.save(shareInstance);
 
+        System.out.println("\n*** share instance id is : rgx"+shareInstance.getId()+"v");
+        LocalDateTime creationDate= TimeConverter.toLocalDateTime(Instant.now(),zone);
+        String formatedDate = DateTimeFormatter.ofPattern("d, MMM yyyy").format(creationDate);
+        String formatedTime= DateTimeFormatter.ofPattern("HH:mm a").format(creationDate);
+
         Notification notifyReceiver = Notification.builder()
                 .status(NotificationStatus.UNREAD)
                 .subject(NotificationSubject.POST_SHARED)
@@ -59,17 +69,19 @@ public class ShareService {
                 .message(sender.getAccountName() + " has shared a post to you")
                 .actor(sender)
                 .account(receiver)
+                .shareInstance(shareInstance)
                 .build();
 
         Notification notification = Notification.builder()
                 .status(NotificationStatus.UNREAD)
                 .account(sender)
                 .actor(sender)
-                .message("the sharing process completed successfully at "+ Instant.now())
+                .message("the sharing process completed successfully on "+ formatedDate+" at "+formatedTime)
                 .post(post)
-                .subject(NotificationSubject.POST_SHARED)
+                .subject(NotificationSubject.POST_SHARED_NOTIFICATION)
                 .build();
 
         notificationRepo.saveAll(List.of(notifyReceiver,notification));
+        postRepo.save(post);
     }
 }
