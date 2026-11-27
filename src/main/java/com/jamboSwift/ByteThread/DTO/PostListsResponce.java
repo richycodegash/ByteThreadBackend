@@ -57,7 +57,7 @@ public record PostListsResponce(
                 .commentCount(count)
                 .hasLiked(hasLiked)
                 .likesCount(likesCount)
-                .imageUrl(post.getImageUrl())
+                .imageUrl(post.getAccount().getAvatarUrl())
                 .followers(followers)
                 .isFollowing(isFollowing)
                 .sharesCount(post.getSharesCount())
