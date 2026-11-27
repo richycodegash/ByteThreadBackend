@@ -6,6 +6,7 @@ import jakarta.validation.ConstraintDeclarationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestValueException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -221,5 +222,21 @@ public class GlobalExceptions {
         System.out.println("\nSOMETHING WENT WRONG :-->"+ex.getMessage()+ "\n\n"+Arrays.toString(ex.getStackTrace()));
 
         return new ResponseEntity<>(errorObject,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorObject> handleConflict(ObjectOptimisticLockingFailureException ex) {
+
+        ErrorObject errorObject = ErrorObject.builder()
+                .errorStatus(HttpStatus.CONFLICT.value())
+                .errorType("CONFLICT")
+                .timestamp(LocalDateTime.now())
+                .error("something went horribly wrong.Your request didn't come through,stay put as we try to fix the issue.(Concurrent modification detected. Please retry.)")
+                .build();
+
+        System.out.println("\nSOMETHING WENT WRONG :-->"+ex.getMessage()+ "\n\n"+Arrays.toString(ex.getStackTrace()));
+
+        return new ResponseEntity<>(errorObject,HttpStatus.CONFLICT);
+
     }
 }

@@ -90,6 +90,9 @@ public class Post {
     @ColumnDefault("0")
     private long commentsCount = 0;
 
+    @Version
+    private Long version;
+
     @Column(nullable = false)
     @ColumnDefault("0")
     private long sharesCount = 0;

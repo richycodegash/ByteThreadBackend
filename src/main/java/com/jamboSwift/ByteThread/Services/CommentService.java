@@ -61,9 +61,11 @@ public class CommentService {
         if (parentComment!=null){
             comment.setParentComment(parentComment);
             parentComment.setReplyCount(parentComment.getReplyCount() + 1);
+        }else{
+            post.setCommentsCount(post.getCommentsCount()+1);
         }
 
-        post.setCommentsCount(post.getCommentsCount()+1);
+        //post.setCommentsCount(post.getCommentsCount()+1);
 
         postRepo.save(post);
         commentRepo.save(comment);
