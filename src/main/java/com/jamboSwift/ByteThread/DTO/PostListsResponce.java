@@ -20,6 +20,7 @@ public record PostListsResponce(
         String excerpt,
         String authorName,
         String imageUrl,
+        String accountProfilePicUrl,
         Long commentCount,
         Long likesCount,
         boolean hasLiked,
@@ -58,6 +59,7 @@ public record PostListsResponce(
                 .hasLiked(hasLiked)
                 .likesCount(likesCount)
                 .imageUrl(post.getImageUrl())
+                .accountProfilePicUrl(post.getAccount().getAvatarUrl())
                 .followers(followers)
                 .isFollowing(isFollowing)
                 .sharesCount(post.getSharesCount())
